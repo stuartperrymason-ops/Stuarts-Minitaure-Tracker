@@ -8,6 +8,8 @@ export interface Theme {
   secondaryText: string;
   accentRing: string;
   button: string;
+  errorRing: string;
+  errorText: string;
 }
 
 export const DEFAULT_THEME: Theme = {
@@ -18,6 +20,8 @@ export const DEFAULT_THEME: Theme = {
   secondaryText: 'text-purple-400',
   accentRing: 'focus:ring-cyan-500',
   button: 'bg-cyan-600 hover:bg-cyan-500',
+  errorRing: 'border-red-500 focus:ring-red-500',
+  errorText: 'text-red-500',
 };
 
 export const THEMES: Record<GameSystem, Theme> = {
@@ -29,6 +33,8 @@ export const THEMES: Record<GameSystem, Theme> = {
     secondaryText: 'text-blue-400',
     accentRing: 'focus:ring-red-500',
     button: 'bg-red-700 hover:bg-red-600',
+    errorRing: 'border-red-500 focus:ring-red-500',
+    errorText: 'text-red-500',
   },
   [GameSystem.Battletech]: {
     bgGradient: 'bg-gradient-to-br from-gray-800 via-green-900/60 to-gray-900',
@@ -38,6 +44,8 @@ export const THEMES: Record<GameSystem, Theme> = {
     secondaryText: 'text-amber-400',
     accentRing: 'focus:ring-green-500',
     button: 'bg-green-700 hover:bg-green-600',
+    errorRing: 'border-red-500 focus:ring-red-500',
+    errorText: 'text-red-500',
   },
   [GameSystem.StarWarsLegion]: {
     bgGradient: 'bg-gradient-to-br from-slate-900 via-gray-800/80 to-black',
@@ -47,6 +55,8 @@ export const THEMES: Record<GameSystem, Theme> = {
     secondaryText: 'text-red-400',
     accentRing: 'focus:ring-sky-500',
     button: 'bg-sky-700 hover:bg-sky-600',
+    errorRing: 'border-red-500 focus:ring-red-500',
+    errorText: 'text-red-500',
   },
   [GameSystem.StarWarsShatterpoint]: {
     bgGradient: 'bg-gradient-to-br from-indigo-900/80 via-purple-900/70 to-black',
@@ -56,6 +66,8 @@ export const THEMES: Record<GameSystem, Theme> = {
     secondaryText: 'text-yellow-400',
     accentRing: 'focus:ring-purple-500',
     button: 'bg-purple-700 hover:bg-purple-600',
+    errorRing: 'border-red-500 focus:ring-red-500',
+    errorText: 'text-red-500',
   },
   [GameSystem.MiddleEarthSBG]: {
     bgGradient: 'bg-gradient-to-br from-emerald-900/80 via-stone-900/80 to-black',
@@ -65,6 +77,8 @@ export const THEMES: Record<GameSystem, Theme> = {
     secondaryText: 'text-stone-400',
     accentRing: 'focus:ring-emerald-500',
     button: 'bg-emerald-700 hover:bg-emerald-600',
+    errorRing: 'border-red-500 focus:ring-red-500',
+    errorText: 'text-red-500',
   },
   [GameSystem.WarhammerOldWorld]: {
     bgGradient: 'bg-gradient-to-br from-amber-900/80 via-stone-800/80 to-black',
@@ -74,6 +88,8 @@ export const THEMES: Record<GameSystem, Theme> = {
     secondaryText: 'text-stone-300',
     accentRing: 'focus:ring-amber-500',
     button: 'bg-amber-700 hover:bg-amber-600',
+    errorRing: 'border-red-500 focus:ring-red-500',
+    errorText: 'text-red-500',
   },
   [GameSystem.AgeOfSigmar]: {
     bgGradient: 'bg-gradient-to-br from-fuchsia-900/80 via-indigo-900/70 to-black',
@@ -83,6 +99,8 @@ export const THEMES: Record<GameSystem, Theme> = {
     secondaryText: 'text-sky-400',
     accentRing: 'focus:ring-fuchsia-500',
     button: 'bg-fuchsia-700 hover:bg-fuchsia-600',
+    errorRing: 'border-red-500 focus:ring-red-500',
+    errorText: 'text-red-500',
   },
   [GameSystem.Warhammer40k]: {
     bgGradient: 'bg-gradient-to-br from-red-900/70 via-gray-900 to-black',
@@ -92,6 +110,8 @@ export const THEMES: Record<GameSystem, Theme> = {
     secondaryText: 'text-gray-400',
     accentRing: 'focus:ring-red-500',
     button: 'bg-red-800 hover:bg-red-700',
+    errorRing: 'border-red-500 focus:ring-red-500',
+    errorText: 'text-red-500',
   },
 };
 

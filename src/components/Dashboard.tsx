@@ -3,7 +3,7 @@ import { Miniature } from '../types';
 import HeatmapChart from './HeatmapChart';
 import StatusChart from './StatusChart';
 import Card from './Card';
-import { CollectionIcon, CheckCircleIcon, ClockIcon } from './Icons';
+import { CollectionIcon, CheckCircleIcon, ClockIcon, ListBulletIcon } from './Icons';
 
 interface DashboardProps {
     miniatures: Miniature[];
@@ -16,16 +16,18 @@ const Dashboard: React.FC<DashboardProps> = ({ miniatures }) => {
             .filter(m => ['Painted', 'Based', 'Ready for Game'].includes(m.status))
             .reduce((sum, m) => sum + m.modelCount, 0);
         const unpaintedModels = totalModels - paintedModels;
+        const totalUnits = miniatures.length;
         
-        return { totalModels, paintedModels, unpaintedModels };
+        return { totalModels, paintedModels, unpaintedModels, totalUnits };
     }, [miniatures]);
 
     return (
         <div className="bg-gray-800/50 rounded-xl shadow-2xl p-6 backdrop-blur-sm">
             <h2 className="text-3xl font-bold text-cyan-400 mb-6 tracking-wider">Dashboard</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
-                <Card title="Total Models" value={stats.totalModels} icon={<CollectionIcon />} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 my-6">
+                <Card title="Total Models" value={stats.totalModels} icon={<CollectionIcon className="h-8 w-8" />} />
+                <Card title="Total Units" value={stats.totalUnits} icon={<ListBulletIcon />} />
                 <Card title="Painted Models" value={stats.paintedModels} icon={<CheckCircleIcon />} />
                 <Card title="Models to Paint" value={stats.unpaintedModels} icon={<ClockIcon />} />
             </div>
