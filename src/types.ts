@@ -1,4 +1,3 @@
-
 export enum GameSystem {
     MarvelCrisisProtocol = "Marvel: Crisis Protocol",
     Battletech = "Battletech",

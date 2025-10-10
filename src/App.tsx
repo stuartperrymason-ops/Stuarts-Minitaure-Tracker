@@ -1,11 +1,12 @@
 import React from 'react';
 import { useState, useMemo, useCallback } from 'react';
-import { Miniature, GameSystem, Filter } from './types';
-import { useHistory, HistoryState } from './hooks/useHistory';
-import Sidebar from './components/Sidebar';
+import { Miniature, GameSystem, Status, Filter } from './types';
+import { useHistory } from './hooks/useHistory';
+import Header from './components/Header';
 import DashboardPage from './pages/DashboardPage';
 import CollectionPage from './pages/CollectionPage';
 import DataManagementPage from './pages/DataManagementPage';
+import { GAME_SYSTEMS, STATUSES } from './constants';
 import { THEMES, DEFAULT_THEME, Theme, ARMY_THEMES } from './themes';
 
 
@@ -24,8 +25,6 @@ const App: React.FC = () => {
         redo,
         canUndo,
         canRedo,
-        fullState,
-        restoreState
     } = useHistory<Miniature[]>('miniatures', []);
 
     const [editingMiniature, setEditingMiniature] = useState<Miniature | null>(null);
@@ -74,7 +73,7 @@ const App: React.FC = () => {
 
     const addMiniature = (miniature: Omit<Miniature, 'id'>) => {
         const newMiniature: Miniature = { ...miniature, id: Date.now().toString() };
-        setMiniatures(prev => [...prev, newMiniature].sort((a, b) => a.modelName.localeCompare(b.modelName)));
+        setMiniatures(prev => [...prev, newMiniature]);
         setIsFormVisible(false);
     };
 
@@ -150,12 +149,29 @@ const App: React.FC = () => {
 
     const handleExport = () => {
         try {
-            const jsonContent = JSON.stringify(fullState, null, 2);
-            const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+            const headers = ['id', 'modelName', 'gameSystem', 'army', 'status', 'modelCount'];
+            
+            const sanitizeValue = (value: any): string => {
+                const str = String(value);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+    
+            const csvRows = [headers.join(',')];
+    
+            miniatures.forEach(mini => {
+                const row = headers.map(header => sanitizeValue(mini[header as keyof Miniature]));
+                csvRows.push(row.join(','));
+            });
+    
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const linkElement = document.createElement('a');
             linkElement.setAttribute('href', url);
-            linkElement.setAttribute('download', 'miniature_tracker_data.json');
+            linkElement.setAttribute('download', 'miniatures_export.csv');
             document.body.appendChild(linkElement);
             linkElement.click();
             document.body.removeChild(linkElement);
@@ -164,34 +180,96 @@ const App: React.FC = () => {
             console.error(error);
         }
     };
-
+    
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
-
+    
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const text = e.target?.result;
                 if (typeof text !== 'string') throw new Error('Could not read file content.');
                 
-                const parsedState: HistoryState<Miniature[]> = JSON.parse(text);
-
-                if (
-                    !parsedState || !('present' in parsedState) || !('past' in parsedState) || !('future' in parsedState) ||
-                    !Array.isArray(parsedState.present) || !Array.isArray(parsedState.past) || !Array.isArray(parsedState.future)
-                ) {
-                    throw new Error('Invalid data file format.');
+                const lines = text.trim().split(/\r?\n/);
+                if (lines.length < 2) throw new Error('CSV file must have a header and at least one data row.');
+    
+                const parseCsvRow = (row: string): string[] => {
+                    const result: string[] = [];
+                    let current = '';
+                    let inQuote = false;
+                    for (let i = 0; i < row.length; i++) {
+                        const char = row[i];
+                        if (char === '"' && inQuote && row[i+1] === '"') {
+                            current += '"';
+                            i++;
+                        } else if (char === '"') {
+                            inQuote = !inQuote;
+                        } else if (char === ',' && !inQuote) {
+                            result.push(current);
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current);
+                    return result;
+                };
+    
+                const headers = parseCsvRow(lines[0]).map(h => h.trim());
+                const expectedHeaders = ['id', 'modelName', 'gameSystem', 'army', 'status', 'modelCount'];
+                
+                if (headers.length !== expectedHeaders.length || !expectedHeaders.every((h, i) => headers[i] === h)) {
+                    throw new Error(`Invalid CSV headers. Expected: ${expectedHeaders.join(',')}`);
                 }
-
-                if (window.confirm(`This will overwrite your entire collection and history with the data from the file. Proceed?`)) {
-                    restoreState(parsedState);
-                    alert(`Successfully loaded collection from file.`);
+    
+                const importedMiniatures: Miniature[] = [];
+    
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+    
+                    const values = parseCsvRow(lines[i]);
+                    if (values.length !== headers.length) {
+                        console.warn(`Skipping malformed row ${i + 1}: Expected ${headers.length} columns, found ${values.length}`);
+                        continue;
+                    }
+                    
+                    const miniObject: any = {};
+                    headers.forEach((header, index) => {
+                        miniObject[header] = values[index];
+                    });
+    
+                    if (!miniObject.modelName || !miniObject.gameSystem || !miniObject.army || !miniObject.status) {
+                         throw new Error(`Row ${i + 1} is missing required fields.`);
+                    }
+                    const modelCount = parseInt(miniObject.modelCount, 10);
+                    if (isNaN(modelCount) || modelCount < 1) {
+                        throw new Error(`Row ${i + 1} has an invalid modelCount.`);
+                    }
+                    if (!STATUSES.includes(miniObject.status as Status)) {
+                        throw new Error(`Row ${i + 1} has an invalid status: "${miniObject.status}".`);
+                    }
+                    if (!GAME_SYSTEMS.includes(miniObject.gameSystem as GameSystem)) {
+                        throw new Error(`Row ${i + 1} has an invalid gameSystem: "${miniObject.gameSystem}".`);
+                    }
+    
+                    importedMiniatures.push({
+                        id: miniObject.id || Date.now().toString() + i,
+                        modelName: miniObject.modelName,
+                        gameSystem: miniObject.gameSystem as GameSystem,
+                        army: miniObject.army,
+                        status: miniObject.status as Status,
+                        modelCount: modelCount,
+                    });
                 }
-
+    
+                if (window.confirm(`This will overwrite your current collection with ${importedMiniatures.length} miniature(s) from the file. This action can be undone. Proceed?`)) {
+                    setMiniatures(importedMiniatures);
+                    alert(`Successfully imported ${importedMiniatures.length} miniature(s).`);
+                }
+    
             } catch (error) {
-                const message = error instanceof Error ? error.message : 'Unknown error';
-                alert(`Failed to load data: ${message}`);
+                alert(`Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 console.error(error);
             } finally {
                 event.target.value = '';
@@ -204,7 +282,9 @@ const App: React.FC = () => {
     const renderPage = () => {
         switch (page) {
             case 'dashboard':
-                return <DashboardPage filteredMiniatures={filteredMiniatures} />;
+                return <DashboardPage 
+                    filteredMiniatures={filteredMiniatures}
+                />;
             case 'collection':
                 return <CollectionPage
                     filteredMiniatures={filteredMiniatures}
@@ -225,23 +305,24 @@ const App: React.FC = () => {
                     onUndo={undo}
                     onRedo={redo}
                     theme={activeTheme}
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
                 />;
             case 'data':
                 return <DataManagementPage onImport={handleImport} onExport={handleExport} />;
             default:
-                return <div className="text-white">Page not found</div>;
+                return <div>Page not found</div>;
         }
     };
 
     return (
-        <div className="flex h-screen bg-gray-900 text-gray-100 font-sans">
-            <Sidebar page={page} setPage={setPage} theme={activeTheme} />
-            <main className={`flex-1 overflow-y-auto transition-colors duration-500 ${activeTheme.bgGradient}`}>
-                <div className="container mx-auto p-4 md:p-8">
-                    {renderPage()}
-                </div>
+        <div className={`min-h-screen text-gray-100 font-sans transition-colors duration-500 ${activeTheme.bgGradient}`}>
+            <Header 
+                page={page} 
+                setPage={setPage} 
+                searchQuery={searchQuery} 
+                setSearchQuery={setSearchQuery} 
+            />
+            <main className="container mx-auto p-4 md:p-8">
+                {renderPage()}
             </main>
         </div>
     );

@@ -21,35 +21,35 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({ onImport, onExp
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Save Section */}
                 <div className="bg-gray-800/50 p-6 rounded-xl shadow-2xl backdrop-blur-sm border border-gray-700/50 flex flex-col">
-                    <h3 className="text-2xl font-semibold text-purple-400 mb-4">Save Collection to File</h3>
+                    <h3 className="text-2xl font-semibold text-purple-400 mb-4">Export Collection to CSV</h3>
                     <p className="text-gray-300 mb-6 flex-grow">
-                        Download your entire collection and action history as a single JSON file. This is the recommended way to create a permanent backup or to transfer your data to another computer.
+                        Download your current collection as a CSV file. This file can be easily edited in spreadsheet software like Excel or Google Sheets. This does not include your undo/redo history.
                     </p>
                     <button 
                         onClick={onExport} 
                         className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"
                     >
                         <DownloadIcon />
-                        Save to JSON File
+                        Export to CSV File
                     </button>
                 </div>
                 {/* Load Section */}
                 <div className="bg-gray-800/50 p-6 rounded-xl shadow-2xl backdrop-blur-sm border border-gray-700/50 flex flex-col">
-                    <h3 className="text-2xl font-semibold text-purple-400 mb-4">Load Collection from File</h3>
+                    <h3 className="text-2xl font-semibold text-purple-400 mb-4">Import Collection from CSV</h3>
                     <p className="text-gray-300 mb-6 flex-grow">
-                        Load a collection from a previously saved JSON file. <strong className="text-yellow-400">Warning:</strong> This will overwrite your current collection and action history.
+                        Load a collection from a CSV file. <strong className="text-yellow-400">Warning:</strong> This will overwrite your current collection. The previous collection will be available via the "Undo" button.
                     </p>
                     <label 
                         className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 cursor-pointer"
                     >
                         <UploadIcon />
-                        Load from JSON File
-                        <input type="file" accept=".json" className="hidden" onChange={onImport} />
+                        Import from CSV File
+                        <input type="file" accept=".csv" className="hidden" onChange={onImport} />
                     </label>
                 </div>
             </div>
              <div className="mt-8 p-4 bg-gray-800/30 rounded-lg text-sm text-gray-400 border border-gray-700/50">
-                <strong>How does saving work?</strong> Your data is automatically saved to your browser's local storage for convenience during a session. Use the "Save to File" option to create a permanent, portable backup that you control.
+                <strong>How does saving work?</strong> Your data is automatically saved to your browser's local storage for convenience. Use the "Export to CSV" option to create a portable backup that can be edited or shared.
             </div>
         </div>
     );
