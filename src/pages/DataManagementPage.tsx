@@ -1,0 +1,58 @@
+import React from 'react';
+import { UploadIcon, DownloadIcon } from '../components/Icons';
+
+interface DataManagementPageProps {
+    onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onExport: () => void;
+}
+
+const DataManagementPage: React.FC<DataManagementPageProps> = ({ onImport, onExport }) => {
+    return (
+        <div className="space-y-8">
+            <div className="p-6 bg-gray-800/50 rounded-xl backdrop-blur-sm border border-gray-700/50">
+                <h2 className="text-3xl font-bold text-cyan-400 mb-2 tracking-wide">
+                    Data Management
+                </h2>
+                <p className="text-gray-400">
+                    Save a portable backup of your collection or load data from a file.
+                </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Save Section */}
+                <div className="bg-gray-800/50 p-6 rounded-xl shadow-2xl backdrop-blur-sm border border-gray-700/50 flex flex-col">
+                    <h3 className="text-2xl font-semibold text-purple-400 mb-4">Save Collection to File</h3>
+                    <p className="text-gray-300 mb-6 flex-grow">
+                        Download your entire collection and action history as a single JSON file. This is the recommended way to create a permanent backup or to transfer your data to another computer.
+                    </p>
+                    <button 
+                        onClick={onExport} 
+                        className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"
+                    >
+                        <DownloadIcon />
+                        Save to JSON File
+                    </button>
+                </div>
+                {/* Load Section */}
+                <div className="bg-gray-800/50 p-6 rounded-xl shadow-2xl backdrop-blur-sm border border-gray-700/50 flex flex-col">
+                    <h3 className="text-2xl font-semibold text-purple-400 mb-4">Load Collection from File</h3>
+                    <p className="text-gray-300 mb-6 flex-grow">
+                        Load a collection from a previously saved JSON file. <strong className="text-yellow-400">Warning:</strong> This will overwrite your current collection and action history.
+                    </p>
+                    <label 
+                        className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 cursor-pointer"
+                    >
+                        <UploadIcon />
+                        Load from JSON File
+                        <input type="file" accept=".json" className="hidden" onChange={onImport} />
+                    </label>
+                </div>
+            </div>
+             <div className="mt-8 p-4 bg-gray-800/30 rounded-lg text-sm text-gray-400 border border-gray-700/50">
+                <strong>How does saving work?</strong> Your data is automatically saved to your browser's local storage for convenience during a session. Use the "Save to File" option to create a permanent, portable backup that you control.
+            </div>
+        </div>
+    );
+};
+
+export default DataManagementPage;

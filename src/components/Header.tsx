@@ -1,4 +1,3 @@
-// FIX: Populating empty file which was causing "not a module" error on import.
 import React from 'react';
 import { Page } from '../App';
 import { PaintBrushIcon, SearchIcon, DashboardIcon, CollectionIcon, DatabaseIcon } from './Icons';

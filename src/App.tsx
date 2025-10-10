@@ -1,12 +1,11 @@
 import React from 'react';
 import { useState, useMemo, useCallback } from 'react';
-import { Miniature, GameSystem, Status, Filter } from './types';
+import { Miniature, GameSystem, Filter } from './types';
 import { useHistory, HistoryState } from './hooks/useHistory';
-import Header from './components/Header';
+import Sidebar from './components/Sidebar';
 import DashboardPage from './pages/DashboardPage';
 import CollectionPage from './pages/CollectionPage';
 import DataManagementPage from './pages/DataManagementPage';
-import { GAME_SYSTEMS, STATUSES } from './constants';
 import { THEMES, DEFAULT_THEME, Theme, ARMY_THEMES } from './themes';
 
 
@@ -75,7 +74,7 @@ const App: React.FC = () => {
 
     const addMiniature = (miniature: Omit<Miniature, 'id'>) => {
         const newMiniature: Miniature = { ...miniature, id: Date.now().toString() };
-        setMiniatures(prev => [...prev, newMiniature]);
+        setMiniatures(prev => [...prev, newMiniature].sort((a, b) => a.modelName.localeCompare(b.modelName)));
         setIsFormVisible(false);
     };
 
@@ -178,15 +177,9 @@ const App: React.FC = () => {
                 
                 const parsedState: HistoryState<Miniature[]> = JSON.parse(text);
 
-                // Validate the structure of the loaded state
                 if (
-                    !parsedState ||
-                    !parsedState.hasOwnProperty('present') ||
-                    !parsedState.hasOwnProperty('past') ||
-                    !parsedState.hasOwnProperty('future') ||
-                    !Array.isArray(parsedState.present) ||
-                    !Array.isArray(parsedState.past) ||
-                    !Array.isArray(parsedState.future)
+                    !parsedState || !('present' in parsedState) || !('past' in parsedState) || !('future' in parsedState) ||
+                    !Array.isArray(parsedState.present) || !Array.isArray(parsedState.past) || !Array.isArray(parsedState.future)
                 ) {
                     throw new Error('Invalid data file format.');
                 }
@@ -197,7 +190,8 @@ const App: React.FC = () => {
                 }
 
             } catch (error) {
-                alert(`Failed to load data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                const message = error instanceof Error ? error.message : 'Unknown error';
+                alert(`Failed to load data: ${message}`);
                 console.error(error);
             } finally {
                 event.target.value = '';
@@ -210,9 +204,7 @@ const App: React.FC = () => {
     const renderPage = () => {
         switch (page) {
             case 'dashboard':
-                return <DashboardPage 
-                    filteredMiniatures={filteredMiniatures}
-                />;
+                return <DashboardPage filteredMiniatures={filteredMiniatures} />;
             case 'collection':
                 return <CollectionPage
                     filteredMiniatures={filteredMiniatures}
@@ -233,24 +225,23 @@ const App: React.FC = () => {
                     onUndo={undo}
                     onRedo={redo}
                     theme={activeTheme}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
                 />;
             case 'data':
                 return <DataManagementPage onImport={handleImport} onExport={handleExport} />;
             default:
-                return <div>Page not found</div>;
+                return <div className="text-white">Page not found</div>;
         }
     };
 
     return (
-        <div className={`min-h-screen text-gray-100 font-sans transition-colors duration-500 ${activeTheme.bgGradient}`}>
-            <Header 
-                page={page} 
-                setPage={setPage} 
-                searchQuery={searchQuery} 
-                setSearchQuery={setSearchQuery} 
-            />
-            <main className="container mx-auto p-4 md:p-8">
-                {renderPage()}
+        <div className="flex h-screen bg-gray-900 text-gray-100 font-sans">
+            <Sidebar page={page} setPage={setPage} theme={activeTheme} />
+            <main className={`flex-1 overflow-y-auto transition-colors duration-500 ${activeTheme.bgGradient}`}>
+                <div className="container mx-auto p-4 md:p-8">
+                    {renderPage()}
+                </div>
             </main>
         </div>
     );
