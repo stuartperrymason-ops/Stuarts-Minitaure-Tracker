@@ -193,7 +193,8 @@ const App: React.FC = () => {
                 const rows = text.split('\n').filter(row => row.trim() !== '');
                 if (rows.length < 2) throw new Error("CSV file is empty or contains only a header.");
 
-                const header = rows[0].trim().split(',');
+                const header = rows[0].trim().split(',').map(h => h.trim());
+                
                 const requiredHeaders = ['modelName', 'gameSystem', 'army', 'status', 'modelCount'];
                 const missingHeaders = requiredHeaders.filter(h => !header.includes(h));
                 if (missingHeaders.length > 0) {
@@ -201,7 +202,7 @@ const App: React.FC = () => {
                 }
 
                 const headerMap: { [key: string]: number } = {};
-                header.forEach((h, i) => { headerMap[h.trim()] = i; });
+                header.forEach((h, i) => { headerMap[h] = i; });
 
                 const newMiniatures: Miniature[] = [];
                 for (let i = 1; i < rows.length; i++) {
