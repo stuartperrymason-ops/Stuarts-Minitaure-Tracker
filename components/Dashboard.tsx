@@ -1,7 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { Miniature, Filter } from '../types';
-import FilterControls from './FilterControls';
+import { Miniature } from '../types';
 import HeatmapChart from './HeatmapChart';
 import StatusChart from './StatusChart';
 import Card from './Card';
@@ -9,12 +8,9 @@ import { CollectionIcon, CheckCircleIcon, ClockIcon } from './Icons';
 
 interface DashboardProps {
     miniatures: Miniature[];
-    allMiniatures: Miniature[];
-    filters: Filter;
-    setFilters: React.Dispatch<React.SetStateAction<Filter>>;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ miniatures, allMiniatures, filters, setFilters }) => {
+const Dashboard: React.FC<DashboardProps> = ({ miniatures }) => {
     const stats = useMemo(() => {
         const totalModels = miniatures.reduce((sum, m) => sum + m.modelCount, 0);
         const paintedModels = miniatures
@@ -29,8 +25,6 @@ const Dashboard: React.FC<DashboardProps> = ({ miniatures, allMiniatures, filter
         <div className="bg-gray-800/50 rounded-xl shadow-2xl p-6 backdrop-blur-sm">
             <h2 className="text-3xl font-bold text-cyan-400 mb-6 tracking-wider">Dashboard</h2>
             
-            <FilterControls filters={filters} setFilters={setFilters} allMiniatures={allMiniatures} />
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
                 <Card title="Total Models" value={stats.totalModels} icon={<CollectionIcon />} />
                 <Card title="Painted Models" value={stats.paintedModels} icon={<CheckCircleIcon />} />

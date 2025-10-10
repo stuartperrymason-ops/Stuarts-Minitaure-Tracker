@@ -1,15 +1,16 @@
-
 import React from 'react';
 import { Miniature, Filter, GameSystem } from '../types';
 import { GAME_SYSTEMS } from '../constants';
+import { Theme } from '../themes';
 
 interface FilterControlsProps {
     filters: Filter;
     setFilters: React.Dispatch<React.SetStateAction<Filter>>;
     allMiniatures: Miniature[];
+    theme: Theme;
 }
 
-const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, allMiniatures }) => {
+const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, allMiniatures, theme }) => {
     const armyOptions = React.useMemo(() => {
         const armies = new Set(allMiniatures.map(m => m.army));
         return Array.from(armies).sort();
@@ -23,7 +24,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, al
                     id="gameSystemFilter" 
                     value={filters.gameSystem} 
                     onChange={e => setFilters({...filters, gameSystem: e.target.value as GameSystem | 'all'})}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
                 >
                     <option value="all">All Systems</option>
                     {GAME_SYSTEMS.map(gs => <option key={gs} value={gs}>{gs}</option>)}
@@ -38,7 +39,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, al
                     placeholder="Filter by army..."
                     value={filters.army}
                     onChange={e => setFilters({...filters, army: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
                 />
                  <datalist id="army-options">
                     {armyOptions.map(army => <option key={army} value={army} />)}

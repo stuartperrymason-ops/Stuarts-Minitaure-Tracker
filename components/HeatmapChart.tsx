@@ -14,6 +14,8 @@ interface TreemapNode {
     children?: TreemapNode[];
     // FIX: Add optional gameSystem property to allow it on leaf nodes for the tooltip.
     gameSystem?: string;
+    // FIX: Add index signature to resolve recharts Treemap data prop type error.
+    [key: string]: any;
 }
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -47,6 +49,11 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({ data }) => {
 
             const gameSystemNode = groupedByGameSystem[mini.gameSystem];
             
+            // FIX: Accumulate size and progress on the game system node.
+            // This ensures the top-level containers have a size for the treemap to render.
+            gameSystemNode.size += mini.modelCount;
+            gameSystemNode.statusProgress += STATUS_PROGRESS[mini.status] * mini.modelCount;
+
             const armyNode = gameSystemNode.children?.find(c => c.name === mini.army);
 
             if (armyNode) {
@@ -84,7 +91,7 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({ data }) => {
     const COLORS = Object.values(STATUS_COLORS);
 
     const CustomTreemapContent = (props: any) => {
-        const { root, depth, x, y, width, height, index, payload, rank, name } = props;
+        const { depth, x, y, width, height, payload, name } = props;
         
         if (!payload || !payload.statusProgress || !payload.size) return null;
         
@@ -101,19 +108,18 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({ data }) => {
                     width={width}
                     height={height}
                     style={{
-                        fill: depth < 2 ? 'transparent' : color,
-                        stroke: '#111827',
-                        strokeWidth: 2 / (depth + 1e-10),
-                        strokeOpacity: 1,
+                        fill: depth === 2 ? color : 'rgba(0,0,0,0.2)',
+                        stroke: '#1f2937', // gray-800
+                        strokeWidth: 2,
                     }}
                 />
-                {depth === 1 && width > 80 && height > 20 ? (
-                     <text x={x + 6} y={y + 18} fill="#fff" fontSize={14} fillOpacity={0.9}>
+                {depth < 2 && width > 80 && height > 25 ? (
+                     <text x={x + 6} y={y + 18} fill="#e5e7eb" /* gray-200 */ fontSize={depth === 0 ? 16 : 14} fontWeight={depth === 0 ? 'bold' : 'normal'}>
                         {name}
                     </text>
                 ) : null}
-                {depth === 2 && width * height > 1000 ? (
-                    <text x={x + 4} y={y + 12} fill="#fff" fontSize={10} fillOpacity={0.7}>
+                {depth === 2 && width > 50 && height > 15 ? (
+                    <text x={x + 4} y={y + 12} fill="#fff" fontSize={10} fillOpacity={0.7} style={{ pointerEvents: 'none' }}>
                         {name}
                     </text>
                 ) : null}
@@ -126,7 +132,8 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({ data }) => {
             <Treemap
                 data={treemapData}
                 dataKey="size"
-                ratio={4 / 3}
+                // FIX: The `recharts` Treemap component expects the `aspectRatio` prop, not `ratio`, to control the aspect ratio of cells.
+                aspectRatio={4 / 3}
                 stroke="#fff"
                 fill="#8884d8"
                 content={<CustomTreemapContent />}

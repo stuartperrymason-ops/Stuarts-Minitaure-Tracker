@@ -1,15 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { Miniature, GameSystem, Status } from '../types';
 import { GAME_SYSTEMS, STATUSES } from '../constants';
+import { Theme } from '../themes';
 
 interface MiniatureFormProps {
     onSubmit: (miniature: Omit<Miniature, 'id'> | Miniature) => void;
     initialData?: Miniature | null;
     onCancel: () => void;
+    theme: Theme;
 }
 
-const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, onCancel }) => {
+const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, onCancel, theme }) => {
     const [formData, setFormData] = useState({
         modelName: '',
         gameSystem: GAME_SYSTEMS[0],
@@ -54,36 +55,36 @@ const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, on
     
     return (
         <form onSubmit={handleSubmit} className="p-6 mb-8 bg-gray-900/50 rounded-lg space-y-6 border border-gray-700">
-            <h3 className="text-2xl font-semibold text-purple-400 border-b border-gray-700 pb-3">{initialData ? 'Edit Miniature' : 'Add New Miniature'}</h3>
+            <h3 className={`text-2xl font-semibold ${theme.secondaryText} border-b border-gray-700 pb-3`}>{initialData ? 'Edit Miniature' : 'Add New Miniature'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label htmlFor="modelName" className="block text-sm font-medium text-gray-300">Model/Unit Name</label>
-                    <input type="text" name="modelName" id="modelName" value={formData.modelName} onChange={handleChange} required className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+                    <input type="text" name="modelName" id="modelName" value={formData.modelName} onChange={handleChange} required className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`} />
                 </div>
                  <div>
                     <label htmlFor="gameSystem" className="block text-sm font-medium text-gray-300">Game System</label>
-                    <select name="gameSystem" id="gameSystem" value={formData.gameSystem} onChange={handleChange} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    <select name="gameSystem" id="gameSystem" value={formData.gameSystem} onChange={handleChange} className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}>
                         {GAME_SYSTEMS.map(gs => <option key={gs} value={gs}>{gs}</option>)}
                     </select>
                 </div>
                  <div>
                     <label htmlFor="army" className="block text-sm font-medium text-gray-300">Army / Faction</label>
-                    <input type="text" name="army" id="army" value={formData.army} onChange={handleChange} required className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+                    <input type="text" name="army" id="army" value={formData.army} onChange={handleChange} required className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`} />
                 </div>
                 <div>
                     <label htmlFor="status" className="block text-sm font-medium text-gray-300">Status</label>
-                    <select name="status" id="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    <select name="status" id="status" value={formData.status} onChange={handleChange} className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}>
                         {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
                  <div className="md:col-span-2">
                     <label htmlFor="modelCount" className="block text-sm font-medium text-gray-300">Model Count</label>
-                    <input type="number" name="modelCount" id="modelCount" min="1" value={formData.modelCount} onChange={handleChange} required className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+                    <input type="number" name="modelCount" id="modelCount" min="1" value={formData.modelCount} onChange={handleChange} required className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`} />
                 </div>
             </div>
             <div className="flex justify-end gap-4 pt-4">
                 <button type="button" onClick={onCancel} className="px-6 py-2 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg shadow-md transition-colors">Cancel</button>
-                <button type="submit" className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow-md transition-colors">{initialData ? 'Update' : 'Save'}</button>
+                <button type="submit" className={`px-6 py-2 ${theme.button} text-white font-semibold rounded-lg shadow-md transition-colors`}>{initialData ? 'Update' : 'Save'}</button>
             </div>
         </form>
     );
