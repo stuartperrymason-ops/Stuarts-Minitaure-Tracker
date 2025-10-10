@@ -148,128 +148,115 @@ const App: React.FC = () => {
     };
 
     const handleExport = () => {
-        try {
-            const headers = ['id', 'modelName', 'gameSystem', 'army', 'status', 'modelCount'];
-            
-            const sanitizeValue = (value: any): string => {
-                const str = String(value);
-                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                    return `"${str.replace(/"/g, '""')}"`;
-                }
-                return str;
-            };
-    
-            const csvRows = [headers.join(',')];
-    
-            miniatures.forEach(mini => {
-                const row = headers.map(header => sanitizeValue(mini[header as keyof Miniature]));
-                csvRows.push(row.join(','));
-            });
-    
-            const csvContent = csvRows.join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', url);
-            linkElement.setAttribute('download', 'miniatures_export.csv');
-            document.body.appendChild(linkElement);
-            linkElement.click();
-            document.body.removeChild(linkElement);
-        } catch (error) {
-            alert('An error occurred while preparing the data for saving.');
-            console.error(error);
+        if (miniatures.length === 0) {
+            alert("Collection is empty. Nothing to export.");
+            return;
         }
+
+        const headers: (keyof Miniature)[] = ['id', 'modelName', 'gameSystem', 'army', 'status', 'modelCount'];
+        
+        const escapeCsvCell = (cell: string | number) => {
+            const strCell = String(cell);
+            if (strCell.includes(',') || strCell.includes('"') || strCell.includes('\n')) {
+                return `"${strCell.replace(/"/g, '""')}"`;
+            }
+            return strCell;
+        };
+
+        const csvRows = [headers.join(',')];
+        miniatures.forEach(mini => {
+            const row = headers.map(header => escapeCsvCell(mini[header]));
+            csvRows.push(row.join(','));
+        });
+
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', url);
+        linkElement.setAttribute('download', 'miniatures_export.csv');
+        document.body.appendChild(linkElement);
+        linkElement.click();
+        document.body.removeChild(linkElement);
     };
-    
+
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
-    
+
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const text = e.target?.result;
                 if (typeof text !== 'string') throw new Error('Could not read file content.');
                 
-                const lines = text.trim().split(/\r?\n/);
-                if (lines.length < 2) throw new Error('CSV file must have a header and at least one data row.');
-    
-                const parseCsvRow = (row: string): string[] => {
-                    const result: string[] = [];
-                    let current = '';
-                    let inQuote = false;
-                    for (let i = 0; i < row.length; i++) {
-                        const char = row[i];
-                        if (char === '"' && inQuote && row[i+1] === '"') {
-                            current += '"';
-                            i++;
-                        } else if (char === '"') {
-                            inQuote = !inQuote;
-                        } else if (char === ',' && !inQuote) {
-                            result.push(current);
-                            current = '';
-                        } else {
-                            current += char;
-                        }
-                    }
-                    result.push(current);
-                    return result;
-                };
-    
-                const headers = parseCsvRow(lines[0]).map(h => h.trim());
-                const expectedHeaders = ['id', 'modelName', 'gameSystem', 'army', 'status', 'modelCount'];
-                
-                if (headers.length !== expectedHeaders.length || !expectedHeaders.every((h, i) => headers[i] === h)) {
-                    throw new Error(`Invalid CSV headers. Expected: ${expectedHeaders.join(',')}`);
+                const rows = text.split('\n').filter(row => row.trim() !== '');
+                if (rows.length < 2) throw new Error("CSV file is empty or contains only a header.");
+
+                const header = rows[0].trim().split(',');
+                const requiredHeaders = ['modelName', 'gameSystem', 'army', 'status', 'modelCount'];
+                const missingHeaders = requiredHeaders.filter(h => !header.includes(h));
+                if (missingHeaders.length > 0) {
+                    throw new Error(`CSV is missing required headers: ${missingHeaders.join(', ')}`);
                 }
-    
-                const importedMiniatures: Miniature[] = [];
-    
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i].trim()) continue;
-    
-                    const values = parseCsvRow(lines[i]);
-                    if (values.length !== headers.length) {
-                        console.warn(`Skipping malformed row ${i + 1}: Expected ${headers.length} columns, found ${values.length}`);
+
+                const headerMap: { [key: string]: number } = {};
+                header.forEach((h, i) => { headerMap[h.trim()] = i; });
+
+                const newMiniatures: Miniature[] = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const values = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    if (values.length !== header.length) {
+                        console.warn(`Row ${i + 1} has an incorrect number of columns. Skipping.`);
                         continue;
                     }
+
+                    const getValue = (key: string) => {
+                        const index = headerMap[key];
+                        if (index === undefined) return '';
+                        let value = values[index] || '';
+                        if (value.startsWith('"') && value.endsWith('"')) {
+                            value = value.substring(1, value.length - 1).replace(/""/g, '"');
+                        }
+                        return value.trim();
+                    };
                     
-                    const miniObject: any = {};
-                    headers.forEach((header, index) => {
-                        miniObject[header] = values[index];
-                    });
-    
-                    if (!miniObject.modelName || !miniObject.gameSystem || !miniObject.army || !miniObject.status) {
-                         throw new Error(`Row ${i + 1} is missing required fields.`);
+                    const gameSystem = getValue('gameSystem');
+                    const status = getValue('status');
+                    const modelCountStr = getValue('modelCount');
+                    const modelName = getValue('modelName');
+
+                    if (!Object.values(GameSystem).includes(gameSystem as GameSystem)) {
+                        throw new Error(`Row ${i + 1}: Invalid game system "${gameSystem}"`);
                     }
-                    const modelCount = parseInt(miniObject.modelCount, 10);
+                    if (!Object.values(Status).includes(status as Status)) {
+                        throw new Error(`Row ${i + 1}: Invalid status "${status}"`);
+                    }
+                    const modelCount = parseInt(modelCountStr, 10);
                     if (isNaN(modelCount) || modelCount < 1) {
-                        throw new Error(`Row ${i + 1} has an invalid modelCount.`);
+                        throw new Error(`Row ${i + 1}: Invalid model count "${modelCountStr}"`);
                     }
-                    if (!STATUSES.includes(miniObject.status as Status)) {
-                        throw new Error(`Row ${i + 1} has an invalid status: "${miniObject.status}".`);
+                    if (!modelName) {
+                        throw new Error(`Row ${i + 1}: Model Name cannot be empty.`);
                     }
-                    if (!GAME_SYSTEMS.includes(miniObject.gameSystem as GameSystem)) {
-                        throw new Error(`Row ${i + 1} has an invalid gameSystem: "${miniObject.gameSystem}".`);
-                    }
-    
-                    importedMiniatures.push({
-                        id: miniObject.id || Date.now().toString() + i,
-                        modelName: miniObject.modelName,
-                        gameSystem: miniObject.gameSystem as GameSystem,
-                        army: miniObject.army,
-                        status: miniObject.status as Status,
-                        modelCount: modelCount,
+
+                    newMiniatures.push({
+                        id: getValue('id') || `${Date.now()}-${i}`,
+                        modelName,
+                        gameSystem: gameSystem as GameSystem,
+                        army: getValue('army'),
+                        status: status as Status,
+                        modelCount,
                     });
                 }
-    
-                if (window.confirm(`This will overwrite your current collection with ${importedMiniatures.length} miniature(s) from the file. This action can be undone. Proceed?`)) {
-                    setMiniatures(importedMiniatures);
-                    alert(`Successfully imported ${importedMiniatures.length} miniature(s).`);
+
+                if (window.confirm(`Found ${newMiniatures.length} valid miniatures. This will overwrite your current collection. The previous collection will be available via the "Undo" button. Proceed?`)) {
+                    setMiniatures(newMiniatures);
+                    alert(`Successfully imported ${newMiniatures.length} miniatures.`);
                 }
-    
+
             } catch (error) {
-                alert(`Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                alert(`Failed to import CSV: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 console.error(error);
             } finally {
                 event.target.value = '';
@@ -284,6 +271,7 @@ const App: React.FC = () => {
             case 'dashboard':
                 return <DashboardPage 
                     filteredMiniatures={filteredMiniatures}
+                    theme={activeTheme}
                 />;
             case 'collection':
                 return <CollectionPage
@@ -320,6 +308,7 @@ const App: React.FC = () => {
                 setPage={setPage} 
                 searchQuery={searchQuery} 
                 setSearchQuery={setSearchQuery} 
+                theme={activeTheme}
             />
             <main className="container mx-auto p-4 md:p-8">
                 {renderPage()}
