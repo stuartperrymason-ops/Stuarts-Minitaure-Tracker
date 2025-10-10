@@ -62,31 +62,31 @@ export const SearchIcon: React.FC = () => (
 
 export const UndoIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" transform="rotate(180 12 12)" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10 9H3l4-4M3 9l4 4m-4-4v10a4 4 0 004 4h9" />
     </svg>
 );
 
 export const RedoIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M14 9h7l-4-4M21 9l-4 4m-4-4V5a4 4 0 00-4-4H4" />
     </svg>
 );
 
 export const SortIcon: React.FC = () => (
     <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 12L3 8m4 4l4-4m6 0v12m0-12l4 4m-4-4L13 8" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
     </svg>
 );
 
 export const SortAscIcon: React.FC = () => (
     <svg className="h-4 w-4 text-cyan-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9M3 12h9m0 0l4-4m-4 4l4 4m-4-4v8" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
     </svg>
 );
 
 export const SortDescIcon: React.FC = () => (
     <svg className="h-4 w-4 text-cyan-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9M3 12h9m0 0l4 4m-4-4l4-4m-4 4v-8" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
     </svg>
 );
 

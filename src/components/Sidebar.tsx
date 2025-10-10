@@ -33,9 +33,9 @@ const NavLink: React.FC<NavLinkProps> = ({ onClick, isActive, children, icon, th
 
 const Sidebar: React.FC<SidebarProps> = ({ page, setPage, theme }) => {
     return (
-        <aside className="flex flex-col w-64 bg-gray-800/50 border-r border-gray-700/50 p-4 transition-all duration-300 shrink-0">
+        <aside className={`flex flex-col w-64 ${theme.sidebarBg} border-r border-gray-700/50 p-4 transition-all duration-500 shrink-0 backdrop-blur-lg`}>
             <div className="flex items-center gap-3 px-2 mb-8">
-                <PaintBrushIcon className="h-8 w-8 text-cyan-400" />
+                <PaintBrushIcon className="h-8 w-8 text-cyan-400 shrink-0" />
                 <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
                     Hobby Tracker
                 </h1>
