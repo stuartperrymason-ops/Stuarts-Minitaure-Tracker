@@ -1,11 +1,11 @@
 
 import React, { useMemo } from 'react';
 import { Miniature } from '../types';
-import HeatmapChart from './HeatmapChart';
 import StatusChart from './StatusChart';
 import Card from './Card';
 import { CollectionIcon, CheckCircleIcon, ClockIcon, ListBulletIcon } from './Icons';
 import { Theme } from '../themes';
+import CombinedStatusTracker from './CombinedStatusTracker';
 
 interface DashboardProps {
     miniatures: Miniature[];
@@ -36,12 +36,11 @@ const Dashboard: React.FC<DashboardProps> = ({ miniatures, theme }) => {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-8">
-                <div className="lg:col-span-3 bg-gray-900/50 p-4 rounded-lg shadow-inner">
-                     <h3 className={`text-xl font-semibold ${theme.secondaryText} mb-4 transition-colors duration-300`}>Progress Heatmap</h3>
-                    <HeatmapChart data={miniatures} />
+                <div className="lg:col-span-3 bg-gray-900/50 p-6 rounded-lg shadow-inner flex flex-col justify-center">
+                    <CombinedStatusTracker miniatures={miniatures} theme={theme} />
                 </div>
                 <div className="lg:col-span-2 bg-gray-900/50 p-4 rounded-lg shadow-inner">
-                     <h3 className={`text-xl font-semibold ${theme.secondaryText} mb-4 transition-colors duration-300`}>Status Overview</h3>
+                     <h3 className={`text-xl font-semibold ${theme.secondaryText} mb-4 transition-colors duration-300`}>Status Breakdown</h3>
                     <StatusChart data={miniatures} />
                 </div>
             </div>

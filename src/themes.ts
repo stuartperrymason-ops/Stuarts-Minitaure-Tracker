@@ -10,6 +10,7 @@ export interface Theme {
   headerBorder: string;
   navLinkActiveBg: string;
   navLinkActiveText: string;
+  legendText: string;
 }
 
 export const DEFAULT_THEME: Theme = {
@@ -22,6 +23,7 @@ export const DEFAULT_THEME: Theme = {
   headerBorder: 'border-cyan-500/20',
   navLinkActiveBg: 'bg-cyan-500/20',
   navLinkActiveText: 'text-cyan-300',
+  legendText: 'text-gray-400',
 };
 
 export const THEMES: Record<GameSystem, Theme> = {
@@ -35,6 +37,7 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-red-500/30',
     navLinkActiveBg: 'bg-red-500/20',
     navLinkActiveText: 'text-red-300',
+    legendText: 'text-gray-300',
   },
   [GameSystem.Battletech]: {
     bgGradient: 'bg-gradient-to-br from-gray-800 via-green-900/80 to-gray-900',
@@ -46,6 +49,7 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-green-500/30',
     navLinkActiveBg: 'bg-green-500/20',
     navLinkActiveText: 'text-green-300',
+    legendText: 'text-gray-300',
   },
   [GameSystem.StarWarsLegion]: {
     bgGradient: 'bg-gradient-to-br from-slate-900 via-gray-800 to-black',
@@ -57,6 +61,7 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-sky-500/30',
     navLinkActiveBg: 'bg-sky-500/20',
     navLinkActiveText: 'text-sky-300',
+    legendText: 'text-gray-300',
   },
   [GameSystem.StarWarsShatterpoint]: {
     bgGradient: 'bg-gradient-to-br from-indigo-900 via-purple-900 to-black',
@@ -68,6 +73,7 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-purple-500/30',
     navLinkActiveBg: 'bg-purple-500/20',
     navLinkActiveText: 'text-purple-300',
+    legendText: 'text-gray-300',
   },
   [GameSystem.MiddleEarthSBG]: {
     bgGradient: 'bg-gradient-to-br from-emerald-900 via-stone-900 to-black',
@@ -79,6 +85,7 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-emerald-500/30',
     navLinkActiveBg: 'bg-emerald-500/20',
     navLinkActiveText: 'text-emerald-300',
+    legendText: 'text-gray-300',
   },
   [GameSystem.WarhammerOldWorld]: {
     bgGradient: 'bg-gradient-to-br from-amber-900 via-stone-800 to-black',
@@ -90,6 +97,7 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-amber-500/30',
     navLinkActiveBg: 'bg-amber-500/20',
     navLinkActiveText: 'text-amber-300',
+    legendText: 'text-gray-300',
   },
   [GameSystem.AgeOfSigmar]: {
     bgGradient: 'bg-gradient-to-br from-fuchsia-900 via-indigo-900 to-black',
@@ -101,6 +109,7 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-fuchsia-500/30',
     navLinkActiveBg: 'bg-fuchsia-500/20',
     navLinkActiveText: 'text-fuchsia-300',
+    legendText: 'text-gray-300',
   },
   [GameSystem.Warhammer40k]: {
     bgGradient: 'bg-gradient-to-br from-red-900/80 via-gray-900 to-black',
@@ -112,6 +121,7 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-red-500/30',
     navLinkActiveBg: 'bg-red-500/20',
     navLinkActiveText: 'text-red-300',
+    legendText: 'text-gray-300',
   },
 };
 
