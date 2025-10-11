@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { initializeDatabase } from './database.js';
+import { connectToDatabase, getDb } from './database.js';
 
 const app = express();
 const PORT = 3001;
@@ -8,30 +8,29 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-let db;
-
 // API routes
 app.get('/api/miniatures', async (req, res) => {
   try {
-    const miniatures = await db.all('SELECT * FROM miniatures');
+    const db = getDb();
+    const miniatures = await db.collection('miniatures').find({}, { projection: { _id: 0 } }).toArray();
     res.json(miniatures);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to fetch miniatures' });
   }
 });
 
 app.post('/api/miniatures', async (req, res) => {
-  const { id, modelName, gameSystem, army, status, modelCount } = req.body;
-  if (!id || !modelName || !gameSystem || !army || !status || modelCount === undefined) {
+  const miniature = req.body;
+  if (!miniature.id || !miniature.modelName || !miniature.gameSystem || !miniature.army || !miniature.status || miniature.modelCount === undefined) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   try {
-    await db.run(
-      'INSERT INTO miniatures (id, modelName, gameSystem, army, status, modelCount) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, modelName, gameSystem, army, status, modelCount]
-    );
-    res.status(201).json(req.body);
+    const db = getDb();
+    await db.collection('miniatures').insertOne(miniature);
+    res.status(201).json(miniature);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to add miniature' });
   }
 });
@@ -39,16 +38,22 @@ app.post('/api/miniatures', async (req, res) => {
 app.put('/api/miniatures/:id', async (req, res) => {
   const { id } = req.params;
   const { modelName, gameSystem, army, status, modelCount } = req.body;
+  
+  // Exclude the 'id' field from the update payload
+  const updatePayload = { modelName, gameSystem, army, status, modelCount };
+
   try {
-    const result = await db.run(
-      'UPDATE miniatures SET modelName = ?, gameSystem = ?, army = ?, status = ?, modelCount = ? WHERE id = ?',
-      [modelName, gameSystem, army, status, modelCount, id]
+    const db = getDb();
+    const result = await db.collection('miniatures').updateOne(
+      { id: id },
+      { $set: updatePayload }
     );
-    if (result.changes === 0) {
+    if (result.matchedCount === 0) {
       return res.status(404).json({ error: 'Miniature not found' });
     }
     res.json(req.body);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to update miniature' });
   }
 });
@@ -56,12 +61,14 @@ app.put('/api/miniatures/:id', async (req, res) => {
 app.delete('/api/miniatures/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await db.run('DELETE FROM miniatures WHERE id = ?', id);
-    if (result.changes === 0) {
+    const db = getDb();
+    const result = await db.collection('miniatures').deleteOne({ id: id });
+    if (result.deletedCount === 0) {
       return res.status(404).json({ error: 'Miniature not found' });
     }
     res.status(204).send(); // No Content
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to delete miniature' });
   }
 });
@@ -69,7 +76,7 @@ app.delete('/api/miniatures/:id', async (req, res) => {
 
 // Start the server after initializing the database
 async function startServer() {
-  db = await initializeDatabase();
+  await connectToDatabase();
   app.listen(PORT, () => {
     console.log(`Backend server running on http://localhost:${PORT}`);
   });
