@@ -4,10 +4,10 @@ import { SortConfig } from '../App';
 import FilterControls from '../components/FilterControls';
 import MiniatureForm from '../components/MiniatureForm';
 import MiniatureList from '../components/MiniatureList';
-import BulkActionBar from '../components/BulkActionBar';
-import BulkEditModal from '../components/BulkEditModal';
 import { PlusCircleIcon } from '../components/Icons';
 import { Theme } from '../themes';
+import BulkActionBar from '../components/BulkActionBar';
+import BulkEditModal from '../components/BulkEditModal';
 
 interface CollectionPageProps {
     filteredMiniatures: Miniature[];
@@ -50,64 +50,81 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
     };
 
     const handleSelectAll = (filteredIds: string[]) => {
-        if (selectedIds.size === filteredIds.length) {
-            setSelectedIds(new Set()); // Deselect all
+        const currentFilteredIds = new Set(filteredIds);
+        const selectedFilteredIds = new Set(
+            Array.from(selectedIds).filter(id => currentFilteredIds.has(id))
+        );
+
+        if (selectedFilteredIds.size === currentFilteredIds.size && currentFilteredIds.size > 0) {
+            // Deselect all filtered
+            setSelectedIds(prev => {
+                const newSet = new Set(prev);
+                for (const id of currentFilteredIds) {
+                    newSet.delete(id);
+                }
+                return newSet;
+            });
         } else {
-            setSelectedIds(new Set(filteredIds)); // Select all
+            // Select all filtered
+            setSelectedIds(prev => new Set([...Array.from(prev), ...filteredIds]));
         }
     };
     
+    const clearSelection = () => setSelectedIds(new Set());
+
     const handleBulkDelete = async () => {
-        const idsToDelete = Array.from(selectedIds);
-        if (idsToDelete.length === 0) return;
+        if (window.confirm(`Are you sure you want to delete ${selectedIds.size} selected miniatures? This action cannot be undone.`)) {
+            const originalMiniatures = [...allMiniatures];
+            const updatedList = allMiniatures.filter(m => !selectedIds.has(m.id));
+            setMiniatures(updatedList);
 
-        if (window.confirm(`Are you sure you want to delete ${idsToDelete.length} selected items? This action cannot be undone.`)) {
+            const idsToDelete = Array.from(selectedIds);
+            clearSelection();
+            
             try {
-                const response = await fetch('/api/miniatures/bulk-delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ids: idsToDelete }),
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to bulk delete miniatures');
+                const responses = await Promise.all(
+                    idsToDelete.map(id => fetch(`/api/miniatures/${id}`, { method: 'DELETE' }))
+                );
+                if (responses.some(res => !res.ok)) {
+                    throw new Error('Some miniatures failed to delete from the server.');
                 }
-
-                setMiniatures(prev => prev.filter(m => !idsToDelete.includes(m.id)));
-                setSelectedIds(new Set());
-
             } catch (error) {
                 console.error(error);
-                alert('Error: Could not delete selected miniatures from the database.');
+                alert('Error: Could not bulk delete miniatures. Reverting changes.');
+                setMiniatures(originalMiniatures);
             }
         }
     };
 
-    const handleBulkEdit = async (updates: Partial<Pick<Miniature, 'status' | 'army'>>) => {
-        const idsToUpdate = Array.from(selectedIds);
-        if (idsToUpdate.length === 0) return;
+    const handleBulkSave = async (updates: { status?: Status; army?: string }) => {
+        const originalMiniatures = [...allMiniatures];
+        const updatedList = allMiniatures.map(m => 
+            selectedIds.has(m.id) ? { ...m, ...updates } : m
+        );
+        setMiniatures(updatedList);
+
+        const idsToUpdate = new Set(selectedIds);
+        setIsBulkEditModalOpen(false);
+        clearSelection();
 
         try {
-            const response = await fetch('/api/miniatures/bulk-update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: idsToUpdate, updates }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to bulk update miniatures');
+            const miniaturesToUpdate = updatedList.filter(m => idsToUpdate.has(m.id));
+            const responses = await Promise.all(
+                miniaturesToUpdate.map(m => 
+                    fetch(`/api/miniatures/${m.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(m),
+                    })
+                )
+            );
+            if (responses.some(res => !res.ok)) {
+                throw new Error('Some miniatures failed to update on the server.');
             }
-            
-            // FIX: Explicitly type the response from the API to resolve incorrect type inference.
-            const updatedMiniatures: Miniature[] = await response.json();
-            const updatedMap = new Map(updatedMiniatures.map((m) => [m.id, m]));
-            
-            setMiniatures(prev => prev.map(m => updatedMap.get(m.id) ?? m));
-            setSelectedIds(new Set());
-            setIsBulkEditModalOpen(false);
         } catch (error) {
             console.error(error);
-             alert('Error: Could not update selected miniatures in the database.');
+            alert('Error: Could not bulk update miniatures. Reverting changes.');
+            setMiniatures(originalMiniatures);
         }
     };
 
@@ -124,12 +141,31 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                 <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
                     <h2 className={`text-3xl font-bold ${theme.primaryText} tracking-wider transition-colors duration-300`}>My Collection</h2>
                     <div className="flex flex-wrap items-center gap-4">
-                        <button onClick={onAddNewClick} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105">
+                        <button onClick={onAddNewClick} className={`flex items-center gap-2 px-4 py-2 ${theme.button} rounded-lg shadow-md transition-all duration-300 transform hover:scale-105`}>
                             <PlusCircleIcon />
                             Add New
                         </button>
                     </div>
                 </div>
+
+                {selectedIds.size > 0 && (
+                    <BulkActionBar
+                        selectedCount={selectedIds.size}
+                        onClear={clearSelection}
+                        onDelete={handleBulkDelete}
+                        onEdit={() => setIsBulkEditModalOpen(true)}
+                        theme={theme}
+                    />
+                )}
+
+                {isBulkEditModalOpen && (
+                    <BulkEditModal
+                        selectedCount={selectedIds.size}
+                        onClose={() => setIsBulkEditModalOpen(false)}
+                        onSave={handleBulkSave}
+                        theme={theme}
+                    />
+                )}
 
                 {isFormVisible && (
                     <MiniatureForm 
@@ -139,17 +175,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                         theme={theme}
                     />
                 )}
-                
-                {selectedIds.size > 0 && (
-                    <BulkActionBar
-                        selectedCount={selectedIds.size}
-                        onClear={() => setSelectedIds(new Set())}
-                        onDelete={handleBulkDelete}
-                        onEdit={() => setIsBulkEditModalOpen(true)}
-                        theme={theme}
-                    />
-                )}
-                
+
                 <MiniatureList 
                     miniatures={filteredMiniatures} 
                     onEdit={onEdit} 
@@ -158,18 +184,9 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                     sortConfig={sortConfig}
                     selectedIds={selectedIds}
                     onSelect={handleSelect}
-                    onSelectAll={handleSelectAll}
+                    onSelectAll={() => handleSelectAll(filteredMiniatures.map(m => m.id))}
                 />
             </div>
-
-            {isBulkEditModalOpen && (
-                <BulkEditModal
-                    onClose={() => setIsBulkEditModalOpen(false)}
-                    onSave={handleBulkEdit}
-                    theme={theme}
-                    selectedCount={selectedIds.size}
-                />
-            )}
         </>
     );
 };

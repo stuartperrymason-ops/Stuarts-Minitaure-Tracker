@@ -1,7 +1,11 @@
 import React from 'react';
 
 const Sidebar: React.FC = () => {
-  return null;
+    return (
+        <div>
+            {/* Sidebar Content */}
+        </div>
+    );
 };
 
 export default Sidebar;
