@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
-import { Miniature, Filter, Status } from '../types';
+import React, { useState, useRef } from 'react';
+import { Miniature, Filter, Status, GameSystem } from '../types';
 import { SortConfig } from '../App';
 import FilterControls from '../components/FilterControls';
 import MiniatureForm from '../components/MiniatureForm';
 import MiniatureList from '../components/MiniatureList';
-import { PlusCircleIcon } from '../components/Icons';
+import { PlusCircleIcon, UploadIcon, DownloadIcon } from '../components/Icons';
 import { Theme } from '../themes';
 import BulkActionBar from '../components/BulkActionBar';
 import BulkEditModal from '../components/BulkEditModal';
+import { GAME_SYSTEMS, STATUSES } from '../constants';
 
 interface CollectionPageProps {
     filteredMiniatures: Miniature[];
@@ -36,6 +37,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
 
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+    const importInputRef = useRef<HTMLInputElement>(null);
 
     const handleSelect = (id: string) => {
         setSelectedIds(prev => {
@@ -56,16 +58,12 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         );
 
         if (selectedFilteredIds.size === currentFilteredIds.size && currentFilteredIds.size > 0) {
-            // Deselect all filtered
             setSelectedIds(prev => {
                 const newSet = new Set(prev);
-                for (const id of currentFilteredIds) {
-                    newSet.delete(id);
-                }
+                for (const id of currentFilteredIds) { newSet.delete(id); }
                 return newSet;
             });
         } else {
-            // Select all filtered
             setSelectedIds(prev => new Set([...Array.from(prev), ...filteredIds]));
         }
     };
@@ -74,20 +72,18 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
 
     const handleBulkDelete = async () => {
         if (window.confirm(`Are you sure you want to delete ${selectedIds.size} selected miniatures? This action cannot be undone.`)) {
-            const originalMiniatures = [...allMiniatures];
-            const updatedList = allMiniatures.filter(m => !selectedIds.has(m.id));
-            setMiniatures(updatedList);
-
             const idsToDelete = Array.from(selectedIds);
+            const originalMiniatures = [...allMiniatures];
+            setMiniatures(prev => prev.filter(m => !idsToDelete.includes(m.id)));
             clearSelection();
             
             try {
-                const responses = await Promise.all(
-                    idsToDelete.map(id => fetch(`/api/miniatures/${id}`, { method: 'DELETE' }))
-                );
-                if (responses.some(res => !res.ok)) {
-                    throw new Error('Some miniatures failed to delete from the server.');
-                }
+                const response = await fetch('/api/miniatures/bulk', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: idsToDelete }),
+                });
+                if (!response.ok) throw new Error('Bulk delete failed on the server.');
             } catch (error) {
                 console.error(error);
                 alert('Error: Could not bulk delete miniatures. Reverting changes.');
@@ -96,36 +92,121 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         }
     };
 
-    const handleBulkSave = async (updates: { status?: Status; army?: string }) => {
+    const handleBulkEdit = async (updates: { status?: Status; army?: string; gameSystem?: GameSystem }) => {
+        const idsToUpdate = Array.from(selectedIds);
         const originalMiniatures = [...allMiniatures];
-        const updatedList = allMiniatures.map(m => 
-            selectedIds.has(m.id) ? { ...m, ...updates } : m
+        
+        // Optimistic UI update
+        setMiniatures(prev =>
+            prev.map(m => (idsToUpdate.includes(m.id) ? { ...m, ...updates } : m))
         );
-        setMiniatures(updatedList);
-
-        const idsToUpdate = new Set(selectedIds);
         setIsBulkEditModalOpen(false);
         clearSelection();
 
         try {
-            const miniaturesToUpdate = updatedList.filter(m => idsToUpdate.has(m.id));
-            const responses = await Promise.all(
-                miniaturesToUpdate.map(m => 
-                    fetch(`/api/miniatures/${m.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(m),
-                    })
-                )
-            );
-            if (responses.some(res => !res.ok)) {
-                throw new Error('Some miniatures failed to update on the server.');
-            }
+            const response = await fetch('/api/miniatures/bulk', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: idsToUpdate, updates }),
+            });
+            if (!response.ok) throw new Error('Bulk update failed on the server.');
+            
+            const updatedMiniatures: Miniature[] = await response.json();
+            const updatedMap = new Map(updatedMiniatures.map(m => [m.id, m]));
+            
+            // Sync with server state
+            setMiniatures(prev => prev.map(m => updatedMap.get(m.id) ?? m));
         } catch (error) {
             console.error(error);
             alert('Error: Could not bulk update miniatures. Reverting changes.');
             setMiniatures(originalMiniatures);
         }
+    };
+
+    const handleExportCSV = () => {
+        const headers = ['modelName', 'gameSystem', 'army', 'status', 'modelCount'];
+        const csvContent = [
+            headers.join(','),
+            ...allMiniatures.map(m => headers.map(header => `"${m[header as keyof Miniature]}"`).join(','))
+        ].join('\n');
+    
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'miniatures_collection.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+    
+    const handleImportChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+    
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const text = e.target?.result as string;
+                const lines = text.trim().replace(/\r/g, '').split('\n');
+                const headerLine = lines.shift();
+                if (!headerLine) throw new Error("CSV is empty or has no header.");
+
+                const headers = headerLine.trim().split(',').map(h => h.trim());
+                const requiredHeaders = ['modelName', 'gameSystem', 'army', 'status', 'modelCount'];
+                if (!requiredHeaders.every(h => headers.includes(h))) {
+                    throw new Error(`CSV must contain headers: ${requiredHeaders.join(', ')}`);
+                }
+    
+                const miniaturesToImport: Omit<Miniature, 'id'>[] = [];
+                let skippedCount = 0;
+    
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                    const row = headers.reduce((obj, header, index) => {
+                        obj[header] = values[index];
+                        return obj;
+                    }, {} as Record<string, string>);
+    
+                    const modelCount = parseInt(row.modelCount, 10);
+                    const isValid = row.modelName && GAME_SYSTEMS.includes(row.gameSystem as GameSystem) && row.army && STATUSES.includes(row.status as Status) && !isNaN(modelCount) && modelCount > 0;
+    
+                    if (isValid) {
+                        miniaturesToImport.push({
+                            modelName: row.modelName,
+                            gameSystem: row.gameSystem as GameSystem,
+                            army: row.army,
+                            status: row.status as Status,
+                            modelCount: modelCount
+                        });
+                    } else {
+                        skippedCount++;
+                    }
+                }
+    
+                if (miniaturesToImport.length > 0) {
+                    if (!window.confirm(`Found ${miniaturesToImport.length} valid miniatures to import. Proceed?`)) return;
+    
+                    const response = await fetch('/api/miniatures/bulk-import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(miniaturesToImport),
+                    });
+                    if (!response.ok) throw new Error('Failed to import miniatures to the database.');
+    
+                    const newMiniatures = await response.json();
+                    setMiniatures(prev => [...prev, ...newMiniatures]);
+                    alert(`Successfully imported ${newMiniatures.length} miniatures.${skippedCount > 0 ? ` Skipped ${skippedCount} invalid rows.` : ''}`);
+                } else {
+                    alert(`No valid miniatures found to import.${skippedCount > 0 ? ` Skipped ${skippedCount} invalid rows.` : ''}`);
+                }
+            } catch (error) {
+                alert(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            } finally {
+                if(importInputRef.current) importInputRef.current.value = '';
+            }
+        };
+        reader.readAsText(file);
     };
 
     return (
@@ -141,9 +222,15 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                 <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
                     <h2 className={`text-3xl font-bold ${theme.primaryText} tracking-wider transition-colors duration-300`}>My Collection</h2>
                     <div className="flex flex-wrap items-center gap-4">
+                        <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg shadow-md transition-all duration-300">
+                            <DownloadIcon /> Export to CSV
+                        </button>
+                        <label className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg shadow-md transition-all duration-300 cursor-pointer">
+                            <UploadIcon /> Import from CSV
+                            <input type="file" accept=".csv" className="hidden" onChange={handleImportChange} ref={importInputRef} />
+                        </label>
                         <button onClick={onAddNewClick} className={`flex items-center gap-2 px-4 py-2 ${theme.button} rounded-lg shadow-md transition-all duration-300 transform hover:scale-105`}>
-                            <PlusCircleIcon />
-                            Add New
+                            <PlusCircleIcon /> Add New
                         </button>
                     </div>
                 </div>
@@ -162,7 +249,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                     <BulkEditModal
                         selectedCount={selectedIds.size}
                         onClose={() => setIsBulkEditModalOpen(false)}
-                        onSave={handleBulkSave}
+                        onSave={handleBulkEdit}
                         theme={theme}
                     />
                 )}
