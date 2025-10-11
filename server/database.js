@@ -21,14 +21,10 @@ export async function connectToDatabase() {
     console.log('Successfully connected to MongoDB.');
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
-    await client.close();
-    process.exit(1);
+    // Let the server start, but db will be null.
   }
 }
 
 export function getDb() {
-  if (!db) {
-    throw new Error("Database not connected. Call 'connectToDatabase' first.");
-  }
   return db;
 }

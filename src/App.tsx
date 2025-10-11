@@ -186,6 +186,7 @@ const App: React.FC = () => {
                 return <CollectionPage
                     filteredMiniatures={filteredMiniatures}
                     allMiniatures={miniatures}
+                    setMiniatures={setMiniatures}
                     filters={filters}
                     setFilters={setFilters}
                     isFormVisible={isFormVisible}
