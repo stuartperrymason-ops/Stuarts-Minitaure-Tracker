@@ -1,7 +1,6 @@
-// FIX: Populating empty file which was causing "not a module" error on import.
 import React from 'react';
 import { Page } from '../App';
-import { PaintBrushIcon, SearchIcon, DashboardIcon, CollectionIcon, DatabaseIcon } from './Icons';
+import { PaintBrushIcon, SearchIcon, DashboardIcon, CollectionIcon } from './Icons';
 import { Theme } from '../themes';
 
 interface HeaderProps {
@@ -49,7 +48,6 @@ const Header: React.FC<HeaderProps> = ({ page, setPage, searchQuery, setSearchQu
                     <nav className="flex items-center gap-2 sm:gap-4">
                         <NavLink onClick={() => setPage('dashboard')} isActive={page === 'dashboard'} icon={<DashboardIcon />} theme={theme}>Dashboard</NavLink>
                         <NavLink onClick={() => setPage('collection')} isActive={page === 'collection'} icon={<CollectionIcon />} theme={theme}>Collection</NavLink>
-                        <NavLink onClick={() => setPage('data')} isActive={page === 'data'} icon={<DatabaseIcon />} theme={theme}>Data</NavLink>
                     </nav>
 
                     <div className="flex-1 flex justify-end">
