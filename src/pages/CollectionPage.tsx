@@ -98,10 +98,11 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                 throw new Error('Failed to bulk update miniatures');
             }
             
-            const updatedMiniatures = await response.json();
-            const updatedMap = new Map(updatedMiniatures.map((m: Miniature) => [m.id, m]));
+            // FIX: Explicitly type the response from the API to resolve incorrect type inference.
+            const updatedMiniatures: Miniature[] = await response.json();
+            const updatedMap = new Map(updatedMiniatures.map((m) => [m.id, m]));
             
-            setMiniatures(prev => prev.map(m => updatedMap.get(m.id) || m));
+            setMiniatures(prev => prev.map(m => updatedMap.get(m.id) ?? m));
             setSelectedIds(new Set());
             setIsBulkEditModalOpen(false);
         } catch (error) {

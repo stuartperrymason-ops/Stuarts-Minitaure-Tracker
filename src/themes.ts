@@ -28,6 +28,7 @@ export const DEFAULT_THEME: Theme = {
 
 export const THEMES: Record<GameSystem, Theme> = {
   [GameSystem.MarvelCrisisProtocol]: {
+    ...DEFAULT_THEME,
     bgGradient: 'bg-gradient-to-br from-red-900 via-blue-900 to-gray-900',
     primaryText: 'text-red-400',
     secondaryText: 'text-blue-400',
@@ -37,9 +38,9 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-red-500/30',
     navLinkActiveBg: 'bg-red-500/20',
     navLinkActiveText: 'text-red-300',
-    legendText: 'text-gray-300',
   },
   [GameSystem.Battletech]: {
+    ...DEFAULT_THEME,
     bgGradient: 'bg-gradient-to-br from-gray-800 via-green-900/80 to-gray-900',
     primaryText: 'text-green-400',
     secondaryText: 'text-amber-400',
@@ -49,9 +50,9 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-green-500/30',
     navLinkActiveBg: 'bg-green-500/20',
     navLinkActiveText: 'text-green-300',
-    legendText: 'text-gray-300',
   },
   [GameSystem.StarWarsLegion]: {
+    ...DEFAULT_THEME,
     bgGradient: 'bg-gradient-to-br from-slate-900 via-gray-800 to-black',
     primaryText: 'text-sky-400',
     secondaryText: 'text-red-400',
@@ -61,9 +62,9 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-sky-500/30',
     navLinkActiveBg: 'bg-sky-500/20',
     navLinkActiveText: 'text-sky-300',
-    legendText: 'text-gray-300',
   },
   [GameSystem.StarWarsShatterpoint]: {
+    ...DEFAULT_THEME,
     bgGradient: 'bg-gradient-to-br from-indigo-900 via-purple-900 to-black',
     primaryText: 'text-purple-400',
     secondaryText: 'text-yellow-400',
@@ -73,9 +74,9 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-purple-500/30',
     navLinkActiveBg: 'bg-purple-500/20',
     navLinkActiveText: 'text-purple-300',
-    legendText: 'text-gray-300',
   },
   [GameSystem.MiddleEarthSBG]: {
+    ...DEFAULT_THEME,
     bgGradient: 'bg-gradient-to-br from-emerald-900 via-stone-900 to-black',
     primaryText: 'text-emerald-400',
     secondaryText: 'text-stone-400',
@@ -85,9 +86,9 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-emerald-500/30',
     navLinkActiveBg: 'bg-emerald-500/20',
     navLinkActiveText: 'text-emerald-300',
-    legendText: 'text-gray-300',
   },
   [GameSystem.WarhammerOldWorld]: {
+    ...DEFAULT_THEME,
     bgGradient: 'bg-gradient-to-br from-amber-900 via-stone-800 to-black',
     primaryText: 'text-amber-400',
     secondaryText: 'text-stone-300',
@@ -97,9 +98,9 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-amber-500/30',
     navLinkActiveBg: 'bg-amber-500/20',
     navLinkActiveText: 'text-amber-300',
-    legendText: 'text-gray-300',
   },
   [GameSystem.AgeOfSigmar]: {
+    ...DEFAULT_THEME,
     bgGradient: 'bg-gradient-to-br from-fuchsia-900 via-indigo-900 to-black',
     primaryText: 'text-fuchsia-400',
     secondaryText: 'text-sky-400',
@@ -109,9 +110,9 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-fuchsia-500/30',
     navLinkActiveBg: 'bg-fuchsia-500/20',
     navLinkActiveText: 'text-fuchsia-300',
-    legendText: 'text-gray-300',
   },
   [GameSystem.Warhammer40k]: {
+    ...DEFAULT_THEME,
     bgGradient: 'bg-gradient-to-br from-red-900/80 via-gray-900 to-black',
     primaryText: 'text-red-500',
     secondaryText: 'text-gray-400',
@@ -121,8 +122,52 @@ export const THEMES: Record<GameSystem, Theme> = {
     headerBorder: 'border-red-500/30',
     navLinkActiveBg: 'bg-red-500/20',
     navLinkActiveText: 'text-red-300',
-    legendText: 'text-gray-300',
   },
+  // FIX: Add missing GameSystem entries to satisfy the Record type.
+  [GameSystem.Dune]: {
+    ...DEFAULT_THEME,
+    bgGradient: 'bg-gradient-to-br from-orange-900 via-amber-800 to-black',
+    primaryText: 'text-orange-400',
+    secondaryText: 'text-sky-400',
+    accentRing: 'focus:ring-orange-500',
+    button: 'bg-orange-700 hover:bg-orange-600',
+    headerBorder: 'border-orange-500/30',
+    navLinkActiveBg: 'bg-orange-500/20',
+    navLinkActiveText: 'text-orange-300',
+  },
+  [GameSystem.TrenchCrusade]: {
+    ...DEFAULT_THEME,
+    bgGradient: 'bg-gradient-to-br from-stone-800 via-gray-900 to-black',
+    primaryText: 'text-stone-400',
+    secondaryText: 'text-red-500',
+    accentRing: 'focus:ring-stone-500',
+    button: 'bg-stone-700 hover:bg-stone-600',
+    headerBorder: 'border-stone-500/30',
+    navLinkActiveBg: 'bg-stone-500/20',
+    navLinkActiveText: 'text-stone-300',
+  },
+  [GameSystem.LegionImperialis]: {
+    ...DEFAULT_THEME,
+    bgGradient: 'bg-gradient-to-br from-slate-900 via-gray-900 to-black',
+    primaryText: 'text-slate-300',
+    secondaryText: 'text-amber-400',
+    accentRing: 'focus:ring-slate-400',
+    button: 'bg-slate-700 hover:bg-slate-600',
+    headerBorder: 'border-slate-500/30',
+    navLinkActiveBg: 'bg-slate-500/20',
+    navLinkActiveText: 'text-slate-300',
+  },
+  [GameSystem.Conquest]: {
+    ...DEFAULT_THEME,
+    bgGradient: 'bg-gradient-to-br from-teal-900 via-purple-900/60 to-black',
+    primaryText: 'text-teal-400',
+    secondaryText: 'text-purple-400',
+    accentRing: 'focus:ring-teal-500',
+    button: 'bg-teal-700 hover:bg-teal-600',
+    headerBorder: 'border-teal-500/30',
+    navLinkActiveBg: 'bg-teal-500/20',
+    navLinkActiveText: 'text-teal-300',
+  }
 };
 
 export const ARMY_THEMES: Record<string, Record<string, Partial<Theme>>> = {
