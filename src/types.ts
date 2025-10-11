@@ -6,7 +6,11 @@ export enum GameSystem {
     MiddleEarthSBG = "Middle-earth Strategy Battle Game",
     WarhammerOldWorld = "Warhammer: The Old World",
     AgeOfSigmar = "Warhammer: Age of Sigmar",
-    Warhammer40k = "Warhammer 40,000"
+    Warhammer40k = "Warhammer 40,000",
+    Dune = "Dune",
+    TrenchCrusade = "Trench Crusade",
+    LegionImperialis = "Legion Imperialis",
+    Conquest = "Conquest - Last Argument of Kings"
 }
 
 export enum Status {
