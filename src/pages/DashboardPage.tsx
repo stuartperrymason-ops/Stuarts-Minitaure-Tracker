@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Miniature } from '../types';
 import Dashboard from '../components/Dashboard';

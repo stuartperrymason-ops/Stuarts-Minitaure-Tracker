@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Miniature } from '../types';
 import StatusChart from './StatusChart';
