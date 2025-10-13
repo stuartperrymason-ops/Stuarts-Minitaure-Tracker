@@ -1,63 +1,35 @@
-/**
- * @file src/components/FilterControls.tsx
- * This component provides UI elements for filtering the main miniature list.
- * It connects to the Zustand store to manage its state.
- */
-
 import React from 'react';
-import { useAppStore } from '../store';
+import { Miniature, Filter, GameSystem } from '../types';
+import { GAME_SYSTEMS } from '../constants';
+import { Theme } from '../themes';
 
-/**
- * A component with controls to filter the miniature collection.
- * It is now self-contained and gets all necessary data and functions from the store.
- * @returns {JSX.Element} The rendered filter controls form.
- */
-const FilterControls: React.FC = () => {
-    // Select all necessary state and actions from the store.
-    const { 
-        filters, 
-        setFilters, 
-        miniatures: allMiniatures, 
-        gameSystems: allGameSystems, 
-        activeTheme 
-    } = useAppStore();
-    
-    // `useMemo` calculates the list of unique army names based on the selected game system.
+interface FilterControlsProps {
+    filters: Filter;
+    setFilters: React.Dispatch<React.SetStateAction<Filter>>;
+    allMiniatures: Miniature[];
+    theme: Theme;
+}
+
+const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, allMiniatures, theme }) => {
     const armyOptions = React.useMemo(() => {
-        const relevantMiniatures = filters.gameSystem === 'all'
-            ? allMiniatures
-            : allMiniatures.filter(m => m.gameSystem === filters.gameSystem);
-        // FIX: Explicitly typing Set<string> and using Array.from to ensure correct type inference for armyOptions.
-        const armies = new Set<string>(relevantMiniatures.map(m => m.army));
+        const armies = new Set(allMiniatures.map(m => m.army));
         return Array.from(armies).sort();
-    }, [allMiniatures, filters.gameSystem]);
-
-    /**
-     * Handles changes to the game system dropdown, resetting the army filter.
-     */
-    const handleGameSystemChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setFilters({
-            gameSystem: e.target.value,
-            army: '' // Reset the army filter.
-        });
-    };
+    }, [allMiniatures]);
 
     return (
         <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-gray-900/50 rounded-lg">
-            {/* Game System Filter */}
             <div className="flex-1">
                 <label htmlFor="gameSystemFilter" className="block text-sm font-medium text-gray-400 mb-1">Game System</label>
                 <select 
                     id="gameSystemFilter" 
                     value={filters.gameSystem} 
-                    onChange={handleGameSystemChange}
-                    className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${activeTheme.accentRing}`}
+                    onChange={e => setFilters({...filters, gameSystem: e.target.value as GameSystem | 'all'})}
+                    className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
                 >
                     <option value="all">All Systems</option>
-                    {allGameSystems.map(gs => <option key={gs} value={gs}>{gs}</option>)}
+                    {GAME_SYSTEMS.map(gs => <option key={gs} value={gs}>{gs}</option>)}
                 </select>
             </div>
-            {/* Army Filter */}
             <div className="flex-1">
                 <label htmlFor="armyFilter" className="block text-sm font-medium text-gray-400 mb-1">Army</label>
                 <input 
@@ -66,8 +38,8 @@ const FilterControls: React.FC = () => {
                     list="army-options"
                     placeholder="Filter by army..."
                     value={filters.army}
-                    onChange={e => setFilters({ army: e.target.value })}
-                    className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${activeTheme.accentRing}`}
+                    onChange={e => setFilters({...filters, army: e.target.value})}
+                    className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
                 />
                  <datalist id="army-options">
                     {armyOptions.map(army => <option key={army} value={army} />)}

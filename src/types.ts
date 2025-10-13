@@ -1,11 +1,14 @@
-/**
- * @file src/types.ts
- * This file defines the core data structures and types used throughout the application.
- * Centralizing type definitions improves code clarity, reusability, and type safety.
- */
+export enum GameSystem {
+    MarvelCrisisProtocol = "Marvel: Crisis Protocol",
+    Battletech = "Battletech",
+    StarWarsLegion = "Star Wars: Legion",
+    StarWarsShatterpoint = "Star Wars: Shatterpoint",
+    MiddleEarthSBG = "Middle-earth Strategy Battle Game",
+    WarhammerOldWorld = "Warhammer: The Old World",
+    AgeOfSigmar = "Warhammer: Age of Sigmar",
+    Warhammer40k = "Warhammer 40,000"
+}
 
-// Defines the possible completion statuses for a miniature.
-// Using a string enum allows for easy mapping to UI elements and database storage.
 export enum Status {
     Purchased = "Purchased",
     Printed = "Printed",
@@ -16,26 +19,28 @@ export enum Status {
     ReadyForGame = "Ready for Game"
 }
 
-// The main data interface for a miniature entry in the collection.
 export interface Miniature {
-    _id: string;         // Unique identifier from MongoDB.
-    modelName: string;   // Name of the model or unit.
-    gameSystem: string;  // The game system the miniature belongs to (e.g., "Warhammer 40,000").
-    army: string;        // The army or faction (e.g., "Ultramarines").
-    status: Status;      // The current hobby progress status.
-    modelCount: number;  // The number of individual models in this entry.
-    notes?: string;      // Optional user notes.
-    images?: string[]; // An array of URLs to associated images.
+    // FIX: Switched from 'id' to '_id' to align with MongoDB's default property, resolving numerous type errors in the data store.
+    _id: string;
+    modelName: string;
+    // FIX: Changed type to string to support dynamically added game systems.
+    gameSystem: string;
+    army: string;
+    status: Status;
+    modelCount: number;
+    // FIX: Added optional 'notes' and 'images' properties to support new features and fix related type errors.
+    notes?: string;
+    images?: string[];
 }
 
-// Defines the structure for filtering the collection view.
 export interface Filter {
-    gameSystem: string; // Can be a specific system name or 'all'.
-    army: string;       // A string to filter by army name (case-insensitive substring match).
+    // FIX: Changed type to string to support dynamically added game systems.
+    gameSystem: string | 'all';
+    army: string;
 }
 
-// Defines the structure for sorting the collection view.
+// FIX: Added SortConfig type definition to be used across the application, resolving an import error in the store.
 export type SortConfig = {
-    key: keyof Miniature; // The property of the Miniature interface to sort by.
-    direction: 'asc' | 'desc'; // The sorting direction.
+    key: keyof Miniature;
+    direction: 'asc' | 'desc';
 };
