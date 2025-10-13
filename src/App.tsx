@@ -24,8 +24,7 @@ const App: React.FC = () => {
     const [page, setPage] = useState<Page>('dashboard');
 
     // Select actions and state from the Zustand store.
-    // FIX: Destructure state and actions from a single `useAppStore()` call. The custom hook does not accept a selector function.
-    const { fetchInitialData, activeTheme } = useAppStore();
+    const { fetchInitialData, activeTheme, isLoading, error } = useAppStore();
 
     // useEffect hook to fetch initial data from the server when the application first loads.
     // The empty dependency array `[]` ensures this effect runs only once.
@@ -58,7 +57,16 @@ const App: React.FC = () => {
                 setPage={setPage} 
             />
             <main className="container mx-auto p-4 md:p-8">
-                {renderPage()}
+                {isLoading && (
+                    <div className="text-center py-16 text-lg text-gray-400">Loading your collection...</div>
+                )}
+                {error && (
+                    <div className="bg-red-900/50 border border-red-500 text-red-300 px-4 py-3 rounded-lg relative" role="alert">
+                        <strong className="font-bold">Error:</strong>
+                        <span className="block sm:inline ml-2">{error}</span>
+                    </div>
+                )}
+                {!isLoading && !error && renderPage()}
             </main>
         </div>
     );
