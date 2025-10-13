@@ -240,13 +240,14 @@ const App: React.FC = () => {
             result = result.filter(m => m.army.toLowerCase().includes(filters.army.toLowerCase()));
         }
 
-        // Apply search query
+        // Apply search query: Case-insensitive search across multiple fields.
         if (searchQuery.trim()) {
             const lowercasedQuery = searchQuery.toLowerCase();
             result = result.filter(m =>
                 m.modelName.toLowerCase().includes(lowercasedQuery) ||
                 m.gameSystem.toLowerCase().includes(lowercasedQuery) ||
-                m.army.toLowerCase().includes(lowercasedQuery)
+                m.army.toLowerCase().includes(lowercasedQuery) ||
+                (m.notes && m.notes.toLowerCase().includes(lowercasedQuery))
             );
         }
 
