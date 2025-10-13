@@ -187,7 +187,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
     };
     
     /**
-     * Handles the file input change event for CSV import.
+     * Handles the file input change event for CSV import, including duplicate checking.
      * @param {React.ChangeEvent<HTMLInputElement>} event The file input change event.
      */
     const handleImportChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,7 +198,6 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         reader.onload = async (e) => {
             try {
                 const text = e.target?.result as string;
-                // Basic CSV parsing logic.
                 const lines = text.trim().replace(/\r/g, '').split('\n');
                 const headerLine = lines.shift();
                 if (!headerLine) throw new Error("CSV is empty or has no header.");
@@ -209,19 +208,17 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                     throw new Error(`CSV must contain headers: ${requiredHeaders.join(', ')}`);
                 }
     
-                const miniaturesToImport: Omit<Miniature, 'id'>[] = [];
+                const parsedMiniatures: Omit<Miniature, 'id'>[] = [];
                 let skippedCount = 0;
     
                 for (const line of lines) {
                     if (!line.trim()) continue;
-                    // Note: This is a simple parser and may not handle all edge cases (e.g., commas in quoted fields).
                     const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
                     const row = headers.reduce((obj, header, index) => {
                         obj[header] = values[index];
                         return obj;
                     }, {} as Record<string, string>);
     
-                    // Validate each row to ensure data integrity.
                     const modelCount = parseInt(row.modelCount, 10);
                     const isValid = row.modelName && allGameSystems.includes(row.gameSystem) && row.army && STATUSES.includes(row.status as Status) && !isNaN(modelCount) && modelCount > 0;
     
@@ -231,39 +228,69 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                             gameSystem: row.gameSystem,
                             army: row.army,
                             status: row.status as Status,
-                            modelCount: modelCount
+                            modelCount: modelCount,
+                            ...(headers.includes('notes') && { notes: row.notes || '' })
                         };
-                        if (headers.includes('notes')) {
-                            miniData.notes = row.notes || '';
-                        }
-                        miniaturesToImport.push(miniData);
+                        parsedMiniatures.push(miniData);
                     } else {
                         skippedCount++;
                     }
                 }
     
-                if (miniaturesToImport.length > 0) {
-                    if (!window.confirm(`Found ${miniaturesToImport.length} valid miniatures to import. Proceed?`)) return;
-    
-                    // Send the valid data to the backend for bulk import.
-                    const response = await fetch('/api/miniatures/bulk-import', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(miniaturesToImport),
-                    });
-                    if (!response.ok) throw new Error('Failed to import miniatures to the database.');
-    
-                    // Add the newly created miniatures (returned from the server) to the local state.
-                    const newMiniatures = await response.json();
-                    setMiniatures(prev => [...prev, ...newMiniatures]);
-                    alert(`Successfully imported ${newMiniatures.length} miniatures.${skippedCount > 0 ? ` Skipped ${skippedCount} invalid rows.` : ''}`);
+                if (parsedMiniatures.length > 0) {
+                    // --- DUPLICATE CHECKING LOGIC ---
+                    const existingKeys = new Set(
+                        allMiniatures.map(m => `${m.modelName.toLowerCase()}|${m.gameSystem.toLowerCase()}|${m.army.toLowerCase()}`)
+                    );
+
+                    const newMinis: Omit<Miniature, 'id'>[] = [];
+                    const duplicateMinis: Omit<Miniature, 'id'>[] = [];
+
+                    for (const mini of parsedMiniatures) {
+                        const key = `${mini.modelName.toLowerCase()}|${mini.gameSystem.toLowerCase()}|${mini.army.toLowerCase()}`;
+                        if (existingKeys.has(key)) {
+                            duplicateMinis.push(mini);
+                        } else {
+                            newMinis.push(mini);
+                        }
+                    }
+
+                    let finalMiniaturesToImport: Omit<Miniature, 'id'>[] = [];
+
+                    if (duplicateMinis.length > 0) {
+                        const skipDuplicates = window.confirm(
+                            `Import process found ${duplicateMinis.length} potential duplicates (same name, system, and army).\n\n` +
+                            `Do you want to SKIP these duplicates and import only the ${newMinis.length} new miniatures?\n\n` +
+                            `- Click 'OK' to SKIP duplicates.\n` +
+                            `- Click 'Cancel' to IMPORT EVERYTHING (including duplicates).`
+                        );
+                        finalMiniaturesToImport = skipDuplicates ? newMinis : parsedMiniatures;
+                    } else {
+                        finalMiniaturesToImport = parsedMiniatures;
+                    }
+
+                    if (finalMiniaturesToImport.length > 0) {
+                        if (!window.confirm(`Proceed with importing ${finalMiniaturesToImport.length} miniatures?`)) return;
+        
+                        const response = await fetch('/api/miniatures/bulk-import', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(finalMiniaturesToImport),
+                        });
+                        if (!response.ok) throw new Error('Failed to import miniatures to the database.');
+        
+                        const newMiniatures = await response.json();
+                        setMiniatures(prev => [...prev, ...newMiniatures]);
+                        alert(`Successfully imported ${newMiniatures.length} miniatures.${skippedCount > 0 ? ` Skipped ${skippedCount} invalid rows.` : ''}`);
+                    } else {
+                        alert(`No new miniatures to import.${skippedCount > 0 ? ` Skipped ${skippedCount} invalid rows.` : ''}`);
+                    }
                 } else {
                     alert(`No valid miniatures found to import.${skippedCount > 0 ? ` Skipped ${skippedCount} invalid rows.` : ''}`);
                 }
             } catch (error) {
                 alert(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             } finally {
-                // Reset the file input so the user can import the same file again if needed.
                 if(importInputRef.current) importInputRef.current.value = '';
             }
         };
