@@ -1,3 +1,11 @@
+/**
+ * @file src/themes.ts
+ * This file defines the visual themes for the application. It allows for dynamic styling
+ * based on the selected game system or army, providing a more immersive user experience.
+ */
+
+// The `Theme` interface defines the contract for a theme object.
+// Each theme must have these properties, which correspond to various Tailwind CSS classes.
 export interface Theme {
   bgGradient: string;
   primaryText: string;
@@ -11,6 +19,7 @@ export interface Theme {
   legendText: string;
 }
 
+// The `DEFAULT_THEME` is used when no specific game system or army theme is active.
 export const DEFAULT_THEME: Theme = {
   bgGradient: 'bg-gray-900',
   primaryText: 'text-cyan-400',
@@ -24,6 +33,8 @@ export const DEFAULT_THEME: Theme = {
   legendText: 'text-gray-400',
 };
 
+// `THEMES` is a record mapping game system names (strings) to their specific `Theme` objects.
+// Each theme often starts by spreading the `DEFAULT_THEME` and then overriding specific properties.
 export const THEMES: Record<string, Theme> = {
   ["Marvel: Crisis Protocol"]: {
     ...DEFAULT_THEME,
@@ -167,6 +178,9 @@ export const THEMES: Record<string, Theme> = {
   }
 };
 
+// `ARMY_THEMES` provides overrides for specific army/faction names within a game system.
+// This allows for even more granular theming. The structure is nested: Game System -> Army Name -> Partial Theme Object.
+// A `Partial<Theme>` means the object can contain any subset of the keys defined in the `Theme` interface.
 export const ARMY_THEMES: Record<string, Record<string, Partial<Theme>>> = {
     ["Warhammer 40,000"]: {
         "Ultramarines": {

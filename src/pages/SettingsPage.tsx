@@ -1,24 +1,45 @@
+/**
+ * @file src/pages/SettingsPage.tsx
+ * This component provides a user interface for managing application settings,
+ * starting with the ability to add new game systems to the collection.
+ */
+
 import React, { useState } from 'react';
 import { Theme } from '../themes';
 
+// Defines the props that the SettingsPage expects.
 interface SettingsPageProps {
-    allGameSystems: string[];
-    onAddGameSystem: (name: string) => Promise<boolean>;
-    theme: Theme;
+    allGameSystems: string[]; // The current list of all game systems.
+    onAddGameSystem: (name: string) => Promise<boolean>; // A callback function to add a new game system.
+    theme: Theme; // The active theme object for styling.
 }
 
+/**
+ * The page component for managing settings.
+ * @param {SettingsPageProps} props The properties passed from the App component.
+ * @returns {JSX.Element} The rendered settings page.
+ */
 const SettingsPage: React.FC<SettingsPageProps> = ({ allGameSystems, onAddGameSystem, theme }) => {
+    // State to hold the value of the input field for the new game system name.
     const [newSystemName, setNewSystemName] = useState('');
+    // State to track if an add operation is currently in progress, used to disable the button.
     const [isAdding, setIsAdding] = useState(false);
 
+    /**
+     * Handles the form submission to add a new game system.
+     * @param {React.FormEvent} e The form submission event.
+     */
     const handleAdd = async (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault(); // Prevents the default form submission behavior.
+        // Basic validation: do nothing if the input is empty or a submission is already in progress.
         if (!newSystemName.trim() || isAdding) return;
 
         setIsAdding(true);
+        // Call the async function passed via props from the parent (App.tsx).
         const success = await onAddGameSystem(newSystemName);
         setIsAdding(false);
         
+        // If the addition was successful, clear the input field.
         if (success) {
             setNewSystemName('');
         }
@@ -36,6 +57,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ allGameSystems, onAddGameSy
                         Add new game systems to the list available throughout the application.
                     </p>
                     
+                    {/* Form for adding a new game system */}
                     <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-4 mb-6">
                         <input
                             type="text"
@@ -54,6 +76,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ allGameSystems, onAddGameSy
                         </button>
                     </form>
 
+                    {/* List of currently existing game systems */}
                     <div>
                         <h4 className="text-lg font-semibold text-gray-300 mb-3">Current Systems:</h4>
                         <ul className="space-y-2 max-h-60 overflow-y-auto pr-2">

@@ -1,5 +1,10 @@
+/**
+ * @file src/pages/CollectionPage.tsx
+ * This component serves as the main view for the user's collection.
+ * It orchestrates the filter controls, the add/edit form, the miniature list, and bulk action features.
+ */
+
 import React, { useState, useRef } from 'react';
-// FIX: Remove unused GameSystem import.
 import { Miniature, Filter, Status } from '../types';
 import { SortConfig } from '../App';
 import FilterControls from '../components/FilterControls';
@@ -12,6 +17,7 @@ import BulkEditModal from '../components/BulkEditModal';
 import { STATUSES } from '../constants';
 import GameLogoDisplay from '../components/GameLogoDisplay';
 
+// Defines the props that CollectionPage receives from the main App component.
 interface CollectionPageProps {
     filteredMiniatures: Miniature[];
     allMiniatures: Miniature[];
@@ -31,6 +37,12 @@ interface CollectionPageProps {
     theme: Theme;
 }
 
+/**
+ * The page component for the collection view.
+ * Manages UI state specific to this page, like selections and modal visibility.
+ * @param {CollectionPageProps} props The properties passed from the App component.
+ * @returns {JSX.Element} The rendered collection page.
+ */
 const CollectionPage: React.FC<CollectionPageProps> = (props) => {
     const {
         filteredMiniatures, allMiniatures, setMiniatures, allGameSystems, filters, setFilters, isFormVisible, editingMiniature,
@@ -38,13 +50,20 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         onDelete, onSort, theme
     } = props;
 
+    // State for managing the set of selected miniature IDs for bulk actions.
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    // State to control the visibility of the bulk edit modal.
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+    // A ref to the file input element for CSV import, used to reset it after an import.
     const importInputRef = useRef<HTMLInputElement>(null);
 
+    /**
+     * Toggles the selection state of a single miniature.
+     * @param {string} id The ID of the miniature to select/deselect.
+     */
     const handleSelect = (id: string) => {
         setSelectedIds(prev => {
-            const newSet = new Set(prev);
+            const newSet = new Set(prev); // Create a new Set to ensure immutability.
             if (newSet.has(id)) {
                 newSet.delete(id);
             } else {
@@ -54,12 +73,17 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         });
     };
 
+    /**
+     * Selects or deselects all currently visible (filtered) miniatures.
+     * @param {string[]} filteredIds - An array of IDs for all currently filtered miniatures.
+     */
     const handleSelectAll = (filteredIds: string[]) => {
         const currentFilteredIds = new Set(filteredIds);
         const selectedFilteredIds = new Set(
             Array.from(selectedIds).filter(id => currentFilteredIds.has(id))
         );
 
+        // If all visible items are already selected, deselect them. Otherwise, select them.
         if (selectedFilteredIds.size === currentFilteredIds.size && currentFilteredIds.size > 0) {
             setSelectedIds(prev => {
                 const newSet = new Set(prev);
@@ -73,14 +97,20 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
     
     const clearSelection = () => setSelectedIds(new Set());
 
+    /**
+     * Handles the bulk deletion of all selected miniatures.
+     */
     const handleBulkDelete = async () => {
         if (window.confirm(`Are you sure you want to delete ${selectedIds.size} selected miniatures? This action cannot be undone.`)) {
             const idsToDelete = Array.from(selectedIds);
-            const originalMiniatures = [...allMiniatures];
+            const originalMiniatures = [...allMiniatures]; // Backup for optimistic update rollback.
+
+            // Optimistic UI Update: Remove miniatures from the list immediately for a responsive feel.
             setMiniatures(prev => prev.filter(m => !idsToDelete.includes(m.id)));
             clearSelection();
             
             try {
+                // Send the delete request to the backend.
                 const response = await fetch('/api/miniatures/bulk', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
@@ -88,6 +118,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                 });
                 if (!response.ok) throw new Error('Bulk delete failed on the server.');
             } catch (error) {
+                // If the API call fails, roll back the UI change and alert the user.
                 console.error(error);
                 alert('Error: Could not bulk delete miniatures. Reverting changes.');
                 setMiniatures(originalMiniatures);
@@ -95,10 +126,15 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         }
     };
 
+    /**
+     * Handles the bulk editing of all selected miniatures.
+     * @param updates An object containing the fields to update (e.g., { status: 'Painted' }).
+     */
     const handleBulkEdit = async (updates: { status?: Status; army?: string; gameSystem?: string; notes?: string }) => {
         const idsToUpdate = Array.from(selectedIds);
-        const originalMiniatures = [...allMiniatures];
+        const originalMiniatures = [...allMiniatures]; // Backup for rollback.
         
+        // Optimistic UI Update.
         setMiniatures(prev =>
             prev.map(m => (idsToUpdate.includes(m.id) ? { ...m, ...updates } : m))
         );
@@ -106,6 +142,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         clearSelection();
 
         try {
+            // Send the update request to the backend.
             const response = await fetch('/api/miniatures/bulk', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -113,23 +150,28 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
             });
             if (!response.ok) throw new Error('Bulk update failed on the server.');
             
+            // Re-sync state with the authoritative data from the server.
             const updatedMiniatures: Miniature[] = await response.json();
             const updatedMap = new Map(updatedMiniatures.map(m => [m.id, m]));
-            
             setMiniatures(prev => prev.map(m => updatedMap.get(m.id) ?? m));
         } catch (error) {
+            // Rollback on failure.
             console.error(error);
             alert('Error: Could not bulk update miniatures. Reverting changes.');
             setMiniatures(originalMiniatures);
         }
     };
 
+    /**
+     * Exports the entire collection to a CSV file for download.
+     */
     const handleExportCSV = () => {
         const headers = ['modelName', 'gameSystem', 'army', 'status', 'modelCount', 'notes'];
         const csvContent = [
             headers.join(','),
             ...allMiniatures.map(m => headers.map(header => {
                 const value = m[header as keyof Miniature] ?? '';
+                // Escape quotes within values by doubling them, and wrap the whole value in quotes.
                 const escapedValue = `"${String(value).replace(/"/g, '""')}"`;
                 return escapedValue;
             }).join(','))
@@ -144,6 +186,10 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         document.body.removeChild(link);
     };
     
+    /**
+     * Handles the file input change event for CSV import.
+     * @param {React.ChangeEvent<HTMLInputElement>} event The file input change event.
+     */
     const handleImportChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -152,6 +198,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         reader.onload = async (e) => {
             try {
                 const text = e.target?.result as string;
+                // Basic CSV parsing logic.
                 const lines = text.trim().replace(/\r/g, '').split('\n');
                 const headerLine = lines.shift();
                 if (!headerLine) throw new Error("CSV is empty or has no header.");
@@ -167,12 +214,14 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
     
                 for (const line of lines) {
                     if (!line.trim()) continue;
+                    // Note: This is a simple parser and may not handle all edge cases (e.g., commas in quoted fields).
                     const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
                     const row = headers.reduce((obj, header, index) => {
                         obj[header] = values[index];
                         return obj;
                     }, {} as Record<string, string>);
     
+                    // Validate each row to ensure data integrity.
                     const modelCount = parseInt(row.modelCount, 10);
                     const isValid = row.modelName && allGameSystems.includes(row.gameSystem) && row.army && STATUSES.includes(row.status as Status) && !isNaN(modelCount) && modelCount > 0;
     
@@ -196,6 +245,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                 if (miniaturesToImport.length > 0) {
                     if (!window.confirm(`Found ${miniaturesToImport.length} valid miniatures to import. Proceed?`)) return;
     
+                    // Send the valid data to the backend for bulk import.
                     const response = await fetch('/api/miniatures/bulk-import', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -203,6 +253,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                     });
                     if (!response.ok) throw new Error('Failed to import miniatures to the database.');
     
+                    // Add the newly created miniatures (returned from the server) to the local state.
                     const newMiniatures = await response.json();
                     setMiniatures(prev => [...prev, ...newMiniatures]);
                     alert(`Successfully imported ${newMiniatures.length} miniatures.${skippedCount > 0 ? ` Skipped ${skippedCount} invalid rows.` : ''}`);
@@ -212,6 +263,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
             } catch (error) {
                 alert(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             } finally {
+                // Reset the file input so the user can import the same file again if needed.
                 if(importInputRef.current) importInputRef.current.value = '';
             }
         };
@@ -229,8 +281,10 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
             />
         
             <div className="relative my-8 p-6 bg-gray-800/50 rounded-xl shadow-2xl backdrop-blur-sm overflow-hidden">
+                {/* The GameLogoDisplay component provides the background watermark effect. */}
                 <GameLogoDisplay gameSystem={filters.gameSystem} />
                 
+                {/* The `z-10` class ensures this content appears above the background logo. */}
                 <div className="relative z-10">
                     <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
                         <h2 className={`text-3xl font-bold ${theme.primaryText} tracking-wider transition-colors duration-300`}>My Collection</h2>
@@ -248,6 +302,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                         </div>
                     </div>
 
+                    {/* The BulkActionBar is only rendered if at least one item is selected. */}
                     {selectedIds.size > 0 && (
                         <BulkActionBar
                             selectedCount={selectedIds.size}
@@ -258,6 +313,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                         />
                     )}
 
+                    {/* The BulkEditModal is only rendered if its visibility state is true. */}
                     {isBulkEditModalOpen && (
                         <BulkEditModal
                             selectedCount={selectedIds.size}
@@ -268,13 +324,13 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                         />
                     )}
 
+                    {/* The MiniatureForm is only rendered if its visibility state is true. */}
                     {isFormVisible && (
                         <MiniatureForm 
                             onSubmit={onFormSubmit}
                             initialData={editingMiniature}
                             onCancel={onCancelForm}
                             theme={theme}
-                            // FIX: Pass allGameSystems to the form so it can populate its dropdown.
                             allGameSystems={allGameSystems}
                         />
                     )}
