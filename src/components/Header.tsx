@@ -1,6 +1,6 @@
 import React from 'react';
 import { Page } from '../App';
-import { PaintBrushIcon, SearchIcon, DashboardIcon, CollectionIcon } from './Icons';
+import { PaintBrushIcon, SearchIcon, DashboardIcon, CollectionIcon, SettingsIcon } from './Icons';
 import { Theme } from '../themes';
 
 interface HeaderProps {
@@ -48,6 +48,7 @@ const Header: React.FC<HeaderProps> = ({ page, setPage, searchQuery, setSearchQu
                     <nav className="flex items-center gap-2 sm:gap-4">
                         <NavLink onClick={() => setPage('dashboard')} isActive={page === 'dashboard'} icon={<DashboardIcon />} theme={theme}>Dashboard</NavLink>
                         <NavLink onClick={() => setPage('collection')} isActive={page === 'collection'} icon={<CollectionIcon />} theme={theme}>Collection</NavLink>
+                        <NavLink onClick={() => setPage('settings')} isActive={page === 'settings'} icon={<SettingsIcon />} theme={theme}>Settings</NavLink>
                     </nav>
 
                     <div className="flex-1 flex justify-end">

@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
 import { Status, GameSystem } from '../types';
-import { STATUSES, GAME_SYSTEMS } from '../constants';
+import { STATUSES } from '../constants';
 import { Theme } from '../themes';
 import Modal from './Modal';
 
 interface BulkEditModalProps {
     onClose: () => void;
-    onSave: (updates: { status?: Status; army?: string, gameSystem?: GameSystem }) => void;
+    onSave: (updates: { status?: Status; army?: string, gameSystem?: GameSystem, notes?: string }) => void;
     theme: Theme;
     selectedCount: number;
+    allGameSystems: string[];
 }
 
-const BulkEditModal: React.FC<BulkEditModalProps> = ({ onClose, onSave, theme, selectedCount }) => {
+const BulkEditModal: React.FC<BulkEditModalProps> = ({ onClose, onSave, theme, selectedCount, allGameSystems }) => {
     const [status, setStatus] = useState<Status | ''>('');
     const [army, setArmy] = useState('');
     const [gameSystem, setGameSystem] = useState<GameSystem | ''>('');
+    const [notes, setNotes] = useState('');
+    const [updateNotes, setUpdateNotes] = useState(false);
 
     const handleSave = () => {
-        const updates: { status?: Status; army?: string; gameSystem?: GameSystem } = {};
+        const updates: { status?: Status; army?: string; gameSystem?: GameSystem, notes?: string } = {};
         if (status) {
             updates.status = status;
         }
@@ -26,6 +29,9 @@ const BulkEditModal: React.FC<BulkEditModalProps> = ({ onClose, onSave, theme, s
         }
         if (gameSystem) {
             updates.gameSystem = gameSystem;
+        }
+        if (updateNotes) {
+            updates.notes = notes;
         }
 
         if (Object.keys(updates).length > 0) {
@@ -48,7 +54,7 @@ const BulkEditModal: React.FC<BulkEditModalProps> = ({ onClose, onSave, theme, s
                         className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
                     >
                         <option value="">-- No Change --</option>
-                        {GAME_SYSTEMS.map(gs => <option key={gs} value={gs}>{gs}</option>)}
+                        {allGameSystems.map(gs => <option key={gs} value={gs}>{gs}</option>)}
                     </select>
                 </div>
                 <div>
@@ -73,6 +79,26 @@ const BulkEditModal: React.FC<BulkEditModalProps> = ({ onClose, onSave, theme, s
                         <option value="">-- No Change --</option>
                         {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
+                </div>
+                <div>
+                    <label className="flex items-center space-x-2 text-sm font-medium text-gray-300">
+                        <input
+                            type="checkbox"
+                            checked={updateNotes}
+                            onChange={(e) => setUpdateNotes(e.target.checked)}
+                            className={`h-4 w-4 rounded bg-gray-700 border-gray-600 text-cyan-600 focus:ring-cyan-500`}
+                        />
+                         <span>Update Notes</span>
+                    </label>
+                    <textarea
+                        id="bulk-notes"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Enter new notes. Leave blank to clear notes."
+                        disabled={!updateNotes}
+                        rows={3}
+                        className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing} ${!updateNotes ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    />
                 </div>
             </div>
             <div className="flex justify-end gap-4 p-4 bg-gray-700/50">

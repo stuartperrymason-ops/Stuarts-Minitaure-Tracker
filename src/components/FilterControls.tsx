@@ -1,16 +1,16 @@
 import React from 'react';
 import { Miniature, Filter, GameSystem } from '../types';
-import { GAME_SYSTEMS } from '../constants';
 import { Theme } from '../themes';
 
 interface FilterControlsProps {
     filters: Filter;
     setFilters: React.Dispatch<React.SetStateAction<Filter>>;
     allMiniatures: Miniature[];
+    allGameSystems: string[];
     theme: Theme;
 }
 
-const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, allMiniatures, theme }) => {
+const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, allMiniatures, allGameSystems, theme }) => {
     const armyOptions = React.useMemo(() => {
         const armies = new Set(allMiniatures.map(m => m.army));
         return Array.from(armies).sort();
@@ -27,7 +27,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, al
                     className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
                 >
                     <option value="all">All Systems</option>
-                    {GAME_SYSTEMS.map(gs => <option key={gs} value={gs}>{gs}</option>)}
+                    {allGameSystems.map(gs => <option key={gs} value={gs}>{gs}</option>)}
                 </select>
             </div>
             <div className="flex-1">

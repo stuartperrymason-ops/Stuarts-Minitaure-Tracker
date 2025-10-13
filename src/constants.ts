@@ -1,6 +1,5 @@
-import { GameSystem, Status } from './types';
+import { Status } from './types';
 
-export const GAME_SYSTEMS: GameSystem[] = Object.values(GameSystem);
 export const STATUSES: Status[] = Object.values(Status);
 
 export const STATUS_COLORS: Record<Status, string> = {

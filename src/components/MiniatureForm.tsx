@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Miniature, GameSystem, Status } from '../types';
-import { GAME_SYSTEMS, STATUSES } from '../constants';
+import { STATUSES } from '../constants';
 import { Theme } from '../themes';
 
 interface MiniatureFormProps {
@@ -8,15 +8,17 @@ interface MiniatureFormProps {
     initialData?: Miniature | null;
     onCancel: () => void;
     theme: Theme;
+    allGameSystems: string[];
 }
 
-const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, onCancel, theme }) => {
+const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, onCancel, theme, allGameSystems }) => {
     const [formData, setFormData] = useState({
         modelName: '',
-        gameSystem: GAME_SYSTEMS[0],
+        gameSystem: allGameSystems[0] || '',
         army: '',
         status: STATUSES[0],
         modelCount: 1,
+        notes: '',
     });
 
     useEffect(() => {
@@ -27,19 +29,21 @@ const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, on
                 army: initialData.army,
                 status: initialData.status,
                 modelCount: initialData.modelCount,
+                notes: initialData.notes || '',
             });
         } else {
             setFormData({
                 modelName: '',
-                gameSystem: GAME_SYSTEMS[0],
+                gameSystem: allGameSystems[0] || '',
                 army: '',
                 status: STATUSES[0],
                 modelCount: 1,
+                notes: '',
             });
         }
-    }, [initialData]);
+    }, [initialData, allGameSystems]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: name === 'modelCount' ? parseInt(value) || 0 : value }));
     };
@@ -64,7 +68,7 @@ const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, on
                  <div>
                     <label htmlFor="gameSystem" className="block text-sm font-medium text-gray-300">Game System</label>
                     <select name="gameSystem" id="gameSystem" value={formData.gameSystem} onChange={handleChange} className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}>
-                        {GAME_SYSTEMS.map(gs => <option key={gs} value={gs}>{gs}</option>)}
+                        {allGameSystems.map(gs => <option key={gs} value={gs}>{gs}</option>)}
                     </select>
                 </div>
                  <div>
@@ -77,9 +81,13 @@ const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, on
                         {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
-                 <div className="md:col-span-2">
+                 <div className="">
                     <label htmlFor="modelCount" className="block text-sm font-medium text-gray-300">Model Count</label>
                     <input type="number" name="modelCount" id="modelCount" min="1" value={formData.modelCount} onChange={handleChange} required className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`} />
+                </div>
+                 <div className="md:col-span-2">
+                    <label htmlFor="notes" className="block text-sm font-medium text-gray-300">Notes</label>
+                    <textarea name="notes" id="notes" rows={4} value={formData.notes} onChange={handleChange} placeholder="Add paint recipes, lore, or other notes..." className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}></textarea>
                 </div>
             </div>
             <div className="flex justify-end gap-4 pt-4">

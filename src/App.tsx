@@ -4,10 +4,11 @@ import { Miniature, Filter } from './types';
 import Header from './components/Header';
 import DashboardPage from './pages/DashboardPage';
 import CollectionPage from './pages/CollectionPage';
+import SettingsPage from './pages/SettingsPage';
 import { THEMES, DEFAULT_THEME, Theme, ARMY_THEMES } from './themes';
 import { GameSystem } from './types';
 
-export type Page = 'dashboard' | 'collection';
+export type Page = 'dashboard' | 'collection' | 'settings';
 
 export type SortConfig = {
     key: keyof Miniature;
@@ -16,6 +17,7 @@ export type SortConfig = {
 
 const App: React.FC = () => {
     const [miniatures, setMiniatures] = useState<Miniature[]>([]);
+    const [gameSystems, setGameSystems] = useState<string[]>([]);
     const [editingMiniature, setEditingMiniature] = useState<Miniature | null>(null);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [filters, setFilters] = useState<Filter>({ gameSystem: 'all', army: '' });
@@ -25,20 +27,26 @@ const App: React.FC = () => {
 
     // Fetch initial data from the backend
     useEffect(() => {
-        const fetchMiniatures = async () => {
+        const fetchData = async () => {
             try {
-                const response = await fetch('/api/miniatures');
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const data: Miniature[] = await response.json();
-                setMiniatures(data);
+                const [miniaturesResponse, gameSystemsResponse] = await Promise.all([
+                    fetch('/api/miniatures'),
+                    fetch('/api/gamesystems')
+                ]);
+
+                if (!miniaturesResponse.ok) throw new Error('Network response for miniatures was not ok');
+                const miniaturesData: Miniature[] = await miniaturesResponse.json();
+                setMiniatures(miniaturesData);
+
+                if (!gameSystemsResponse.ok) throw new Error('Network response for game systems was not ok');
+                const gameSystemsData: string[] = await gameSystemsResponse.json();
+                setGameSystems(gameSystemsData);
+
             } catch (error) {
-                console.error("Failed to fetch miniatures:", error);
-                // Optionally, show an error message to the user
+                console.error("Failed to fetch data:", error);
             }
         };
-        fetchMiniatures();
+        fetchData();
     }, []);
 
     const activeTheme: Theme = useMemo(() => {
@@ -175,6 +183,28 @@ const App: React.FC = () => {
         setIsFormVisible(true);
     };
 
+    const addGameSystem = async (name: string): Promise<boolean> => {
+        try {
+            const response = await fetch('/api/gamesystems', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name }),
+            });
+            if (response.status === 409) {
+                alert('Game system already exists.');
+                return false;
+            }
+            if (!response.ok) throw new Error('Failed to add game system');
+            const newGameSystem = await response.json();
+            setGameSystems(prev => [...prev, newGameSystem.name].sort());
+            return true;
+        } catch (error) {
+            console.error(error);
+            alert('Error: Could not save game system to the database.');
+            return false;
+        }
+    };
+
     const renderPage = () => {
         switch (page) {
             case 'dashboard':
@@ -187,6 +217,7 @@ const App: React.FC = () => {
                     filteredMiniatures={filteredMiniatures}
                     allMiniatures={miniatures}
                     setMiniatures={setMiniatures}
+                    allGameSystems={gameSystems}
                     filters={filters}
                     setFilters={setFilters}
                     isFormVisible={isFormVisible}
@@ -198,6 +229,12 @@ const App: React.FC = () => {
                     onEdit={handleEdit}
                     onDelete={deleteMiniature}
                     onSort={handleSort}
+                    theme={activeTheme}
+                />;
+            case 'settings':
+                return <SettingsPage
+                    allGameSystems={gameSystems}
+                    onAddGameSystem={addGameSystem}
                     theme={activeTheme}
                 />;
             default:

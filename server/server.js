@@ -3,8 +3,27 @@ import cors from 'cors';
 import { connectToDatabase, getDb } from './database.js';
 import { ObjectId } from 'mongodb';
 
+async function seedGameSystems() {
+  const db = getDb();
+  if (!db) return;
+  const gameSystemsCollection = db.collection('gamesystems');
+  const count = await gameSystemsCollection.countDocuments();
+  if (count === 0) {
+      console.log('Seeding initial game systems...');
+      const initialGameSystems = [
+          "Marvel: Crisis Protocol", "Battletech", "Star Wars: Legion", "Star Wars: Shatterpoint",
+          "Middle-earth Strategy Battle Game", "Warhammer: The Old World", "Warhammer: Age of Sigmar",
+          "Warhammer 40,000", "Dune", "Trench Crusade", "Legion Imperialis", "Conquest - Last Argument of Kings"
+      ].map(name => ({ name }));
+      await gameSystemsCollection.insertMany(initialGameSystems);
+      console.log('Finished seeding game systems.');
+  }
+}
+
 // Connect to the database on startup
-connectToDatabase();
+connectToDatabase().then(() => {
+  seedGameSystems();
+});
 
 const app = express();
 const port = 3001;
@@ -20,6 +39,38 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// GET all game systems
+app.get('/api/gamesystems', async (req, res) => {
+  try {
+    const systems = await getDb().collection('gamesystems').find({}).sort({ name: 1 }).toArray();
+    res.json(systems.map(s => s.name));
+  } catch (error) {
+    console.error('GET /api/gamesystems error:', error);
+    res.status(500).json({ message: 'Failed to fetch game systems', error: error.message });
+  }
+});
+
+// POST a new game system
+app.post('/api/gamesystems', async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ message: 'Game system name must be a non-empty string.' });
+    }
+    const trimmedName = name.trim();
+    const existing = await getDb().collection('gamesystems').findOne({ name: { $regex: new RegExp(`^${trimmedName}$`, 'i') } });
+    if (existing) {
+      return res.status(409).json({ message: 'Game system already exists.' });
+    }
+    const result = await getDb().collection('gamesystems').insertOne({ name: trimmedName });
+    res.status(201).json({ _id: result.insertedId, name: trimmedName });
+  } catch (error) {
+    console.error('POST /api/gamesystems error:', error);
+    res.status(500).json({ message: 'Failed to create game system', error: error.message });
+  }
+});
+
 
 // GET all miniatures
 app.get('/api/miniatures', async (req, res) => {

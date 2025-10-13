@@ -8,12 +8,13 @@ import { PlusCircleIcon, UploadIcon, DownloadIcon } from '../components/Icons';
 import { Theme } from '../themes';
 import BulkActionBar from '../components/BulkActionBar';
 import BulkEditModal from '../components/BulkEditModal';
-import { GAME_SYSTEMS, STATUSES } from '../constants';
+import { STATUSES } from '../constants';
 
 interface CollectionPageProps {
     filteredMiniatures: Miniature[];
     allMiniatures: Miniature[];
     setMiniatures: React.Dispatch<React.SetStateAction<Miniature[]>>;
+    allGameSystems: string[];
     filters: Filter;
     setFilters: React.Dispatch<React.SetStateAction<Filter>>;
     isFormVisible: boolean;
@@ -30,7 +31,7 @@ interface CollectionPageProps {
 
 const CollectionPage: React.FC<CollectionPageProps> = (props) => {
     const {
-        filteredMiniatures, allMiniatures, setMiniatures, filters, setFilters, isFormVisible, editingMiniature,
+        filteredMiniatures, allMiniatures, setMiniatures, allGameSystems, filters, setFilters, isFormVisible, editingMiniature,
         sortConfig, onAddNewClick, onFormSubmit, onCancelForm, onEdit,
         onDelete, onSort, theme
     } = props;
@@ -92,11 +93,10 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         }
     };
 
-    const handleBulkEdit = async (updates: { status?: Status; army?: string; gameSystem?: GameSystem }) => {
+    const handleBulkEdit = async (updates: { status?: Status; army?: string; gameSystem?: GameSystem; notes?: string }) => {
         const idsToUpdate = Array.from(selectedIds);
         const originalMiniatures = [...allMiniatures];
         
-        // Optimistic UI update
         setMiniatures(prev =>
             prev.map(m => (idsToUpdate.includes(m.id) ? { ...m, ...updates } : m))
         );
@@ -114,7 +114,6 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
             const updatedMiniatures: Miniature[] = await response.json();
             const updatedMap = new Map(updatedMiniatures.map(m => [m.id, m]));
             
-            // Sync with server state
             setMiniatures(prev => prev.map(m => updatedMap.get(m.id) ?? m));
         } catch (error) {
             console.error(error);
@@ -124,10 +123,14 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
     };
 
     const handleExportCSV = () => {
-        const headers = ['modelName', 'gameSystem', 'army', 'status', 'modelCount'];
+        const headers = ['modelName', 'gameSystem', 'army', 'status', 'modelCount', 'notes'];
         const csvContent = [
             headers.join(','),
-            ...allMiniatures.map(m => headers.map(header => `"${m[header as keyof Miniature]}"`).join(','))
+            ...allMiniatures.map(m => headers.map(header => {
+                const value = m[header as keyof Miniature] ?? '';
+                const escapedValue = `"${String(value).replace(/"/g, '""')}"`;
+                return escapedValue;
+            }).join(','))
         ].join('\n');
     
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -151,7 +154,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                 const headerLine = lines.shift();
                 if (!headerLine) throw new Error("CSV is empty or has no header.");
 
-                const headers = headerLine.trim().split(',').map(h => h.trim());
+                const headers = headerLine.trim().split(',').map(h => h.trim().replace(/^"|"$/g, ''));
                 const requiredHeaders = ['modelName', 'gameSystem', 'army', 'status', 'modelCount'];
                 if (!requiredHeaders.every(h => headers.includes(h))) {
                     throw new Error(`CSV must contain headers: ${requiredHeaders.join(', ')}`);
@@ -169,16 +172,20 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                     }, {} as Record<string, string>);
     
                     const modelCount = parseInt(row.modelCount, 10);
-                    const isValid = row.modelName && GAME_SYSTEMS.includes(row.gameSystem as GameSystem) && row.army && STATUSES.includes(row.status as Status) && !isNaN(modelCount) && modelCount > 0;
+                    const isValid = row.modelName && allGameSystems.includes(row.gameSystem as GameSystem) && row.army && STATUSES.includes(row.status as Status) && !isNaN(modelCount) && modelCount > 0;
     
                     if (isValid) {
-                        miniaturesToImport.push({
+                        const miniData: Omit<Miniature, 'id'> = {
                             modelName: row.modelName,
                             gameSystem: row.gameSystem as GameSystem,
                             army: row.army,
                             status: row.status as Status,
                             modelCount: modelCount
-                        });
+                        };
+                        if (headers.includes('notes')) {
+                            miniData.notes = row.notes || '';
+                        }
+                        miniaturesToImport.push(miniData);
                     } else {
                         skippedCount++;
                     }
@@ -215,6 +222,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                 filters={filters} 
                 setFilters={setFilters} 
                 allMiniatures={allMiniatures}
+                allGameSystems={allGameSystems}
                 theme={theme}
             />
         
@@ -251,6 +259,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                         onClose={() => setIsBulkEditModalOpen(false)}
                         onSave={handleBulkEdit}
                         theme={theme}
+                        allGameSystems={allGameSystems}
                     />
                 )}
 
@@ -260,6 +269,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                         initialData={editingMiniature}
                         onCancel={onCancelForm}
                         theme={theme}
+                        allGameSystems={allGameSystems}
                     />
                 )}
 

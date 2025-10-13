@@ -1,17 +1,4 @@
-export enum GameSystem {
-    MarvelCrisisProtocol = "Marvel: Crisis Protocol",
-    Battletech = "Battletech",
-    StarWarsLegion = "Star Wars: Legion",
-    StarWarsShatterpoint = "Star Wars: Shatterpoint",
-    MiddleEarthSBG = "Middle-earth Strategy Battle Game",
-    WarhammerOldWorld = "Warhammer: The Old World",
-    AgeOfSigmar = "Warhammer: Age of Sigmar",
-    Warhammer40k = "Warhammer 40,000",
-    Dune = "Dune",
-    TrenchCrusade = "Trench Crusade",
-    LegionImperialis = "Legion Imperialis",
-    Conquest = "Conquest - Last Argument of Kings"
-}
+export type GameSystem = string;
 
 export enum Status {
     Purchased = "Purchased",
@@ -30,6 +17,7 @@ export interface Miniature {
     army: string;
     status: Status;
     modelCount: number;
+    notes?: string;
 }
 
 export interface Filter {
