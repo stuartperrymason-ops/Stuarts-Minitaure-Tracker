@@ -5,7 +5,6 @@
 
 import React from 'react';
 import { useState, useMemo, useCallback, useEffect } from 'react';
-// FIX: The `GameSystem` enum was removed and replaced with a string type. Removing it from the import.
 import { Miniature, Filter } from './types';
 import Header from './components/Header';
 import DashboardPage from './pages/DashboardPage';
@@ -85,7 +84,6 @@ const App: React.FC = () => {
             if (lowercasedArmy) {
                 // If a specific game system is selected, look for an army theme ONLY within it. This is more predictable.
                 if (filters.gameSystem !== 'all') {
-                    // FIX: `GameSystem` is no longer an enum, so the cast is unnecessary and incorrect. `filters.gameSystem` is a string here.
                     const armyThemesForSystem = ARMY_THEMES[filters.gameSystem];
                     if (armyThemesForSystem) {
                         const armyThemeKey = Object.keys(armyThemesForSystem).find(
@@ -93,7 +91,6 @@ const App: React.FC = () => {
                         );
                         if (armyThemeKey) {
                             // Found a theme. Base it on the selected game system's theme.
-                            // FIX: `GameSystem` is no longer an enum, so the cast is unnecessary and incorrect. `filters.gameSystem` is a string here.
                             const baseTheme = THEMES[filters.gameSystem] || DEFAULT_THEME;
                             const armyOverrides = armyThemesForSystem[armyThemeKey];
                             return { ...baseTheme, ...armyOverrides };
@@ -103,7 +100,6 @@ const App: React.FC = () => {
                 // If game system is 'all', search across all systems. This allows finding an army theme without selecting its system first.
                 else {
                     for (const gameSystem in ARMY_THEMES) {
-                        // FIX: `GameSystem` is no longer an enum, so the cast is unnecessary and incorrect. `gameSystem` is already a string key.
                         const gs = gameSystem;
                         const armyThemesForSystem = ARMY_THEMES[gs];
                         if (armyThemesForSystem) {
