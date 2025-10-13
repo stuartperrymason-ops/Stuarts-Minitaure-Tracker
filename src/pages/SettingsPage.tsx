@@ -13,7 +13,8 @@ import { useAppStore } from '../store';
  */
 const SettingsPage: React.FC = () => {
     // Select necessary state and actions from the Zustand store.
-    const { allGameSystems, addGameSystem, activeTheme } = useAppStore();
+    // FIX: Property 'allGameSystems' does not exist on type '{...}'. The property is named 'gameSystems' in the store, so we alias it.
+    const { gameSystems: allGameSystems, addGameSystem, activeTheme } = useAppStore();
 
     // Local state for the form input field.
     const [newSystemName, setNewSystemName] = useState('');

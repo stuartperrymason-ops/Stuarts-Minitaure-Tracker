@@ -7,6 +7,7 @@
  */
 
 import { create } from 'zustand';
+// FIX: Module '"zustand/middleware"' has no exported member 'immer'. Correct the import path for the immer middleware.
 import { immer } from 'zustand/middleware/immer';
 import { Miniature, Filter, Status } from './types';
 import { THEMES, DEFAULT_THEME, Theme, ARMY_THEMES } from './themes';
