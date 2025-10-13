@@ -1,54 +1,44 @@
 /**
  * @file src/components/FilterControls.tsx
- * This component provides UI elements (dropdowns, text inputs) for filtering the main miniature list.
+ * This component provides UI elements for filtering the main miniature list.
+ * It connects to the Zustand store to manage its state.
  */
 
 import React from 'react';
-import { Miniature, Filter } from '../types';
-import { Theme } from '../themes';
-
-// Defines the props that FilterControls expects.
-interface FilterControlsProps {
-    filters: Filter; // The current filter state object.
-    setFilters: React.Dispatch<React.SetStateAction<Filter>>; // Function to update the filter state in the parent component.
-    allMiniatures: Miniature[]; // The complete list of all miniatures, used to derive filter options.
-    allGameSystems: string[]; // The complete list of all game systems.
-    theme: Theme; // The active theme for styling.
-}
+import { useAppStore } from '../store';
 
 /**
  * A component with controls to filter the miniature collection.
- * @param {FilterControlsProps} props The properties passed to the component.
+ * It is now self-contained and gets all necessary data and functions from the store.
  * @returns {JSX.Element} The rendered filter controls form.
  */
-const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, allMiniatures, allGameSystems, theme }) => {
+const FilterControls: React.FC = () => {
+    // Select all necessary state and actions from the store.
+    const { 
+        filters, 
+        setFilters, 
+        miniatures: allMiniatures, 
+        gameSystems: allGameSystems, 
+        activeTheme 
+    } = useAppStore();
     
-    // `useMemo` calculates the list of unique army names.
-    // This list is now dependent on the selected game system. It only shows armies
-    // that exist within the currently filtered game system.
-    // It recalculates only when `allMiniatures` or `filters.gameSystem` changes.
+    // `useMemo` calculates the list of unique army names based on the selected game system.
     const armyOptions = React.useMemo(() => {
-        // Determine which miniatures to consider based on the game system filter.
         const relevantMiniatures = filters.gameSystem === 'all'
-            ? allMiniatures // If 'All Systems' is selected, use the entire collection.
-            : allMiniatures.filter(m => m.gameSystem === filters.gameSystem); // Otherwise, filter miniatures by the selected system.
-
-        // A `Set` is used here to automatically handle uniqueness.
+            ? allMiniatures
+            : allMiniatures.filter(m => m.gameSystem === filters.gameSystem);
         const armies = new Set(relevantMiniatures.map(m => m.army));
-        // Convert the Set back to an array and sort it alphabetically for the datalist suggestions.
-        return Array.from(armies).sort();
-    }, [allMiniatures, filters.gameSystem]); // The dependency array ensures this runs only when needed.
+        // FIX: Replaced `Array.from` with spread syntax for better type inference to resolve 'type unknown' error.
+        return [...armies].sort();
+    }, [allMiniatures, filters.gameSystem]);
 
     /**
-     * Handles changes to the game system dropdown.
-     * When a new game system is selected, it resets the army filter to prevent
-     * a situation where an invalid army is selected for the new system.
-     * @param {React.ChangeEvent<HTMLSelectElement>} e The select change event.
+     * Handles changes to the game system dropdown, resetting the army filter.
      */
     const handleGameSystemChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setFilters({
             gameSystem: e.target.value,
-            army: '' // Reset the army filter to an empty string.
+            army: '' // Reset the army filter.
         });
     };
 
@@ -60,12 +50,10 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, al
                 <select 
                     id="gameSystemFilter" 
                     value={filters.gameSystem} 
-                    // When the value changes, call the dedicated handler.
                     onChange={handleGameSystemChange}
-                    className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
+                    className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${activeTheme.accentRing}`}
                 >
                     <option value="all">All Systems</option>
-                    {/* Map over the `allGameSystems` array to create an <option> for each one. */}
                     {allGameSystems.map(gs => <option key={gs} value={gs}>{gs}</option>)}
                 </select>
             </div>
@@ -75,14 +63,12 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, al
                 <input 
                     type="text"
                     id="armyFilter"
-                    list="army-options" // Links this input to the datalist below for autocomplete.
+                    list="army-options"
                     placeholder="Filter by army..."
                     value={filters.army}
-                    // The spread operator `...filters` ensures we don't lose the gameSystem filter value.
-                    onChange={e => setFilters({...filters, army: e.target.value})}
-                    className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
+                    onChange={e => setFilters({ army: e.target.value })}
+                    className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${activeTheme.accentRing}`}
                 />
-                 {/* The datalist provides suggestions but allows the user to type any value. */}
                  <datalist id="army-options">
                     {armyOptions.map(army => <option key={army} value={army} />)}
                 </datalist>

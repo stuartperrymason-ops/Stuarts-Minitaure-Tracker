@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { Page } from '../App';
+import { useAppStore } from '../store';
 import { PaintBrushIcon, SearchIcon, DashboardIcon, CollectionIcon, SettingsIcon } from './Icons';
 import { Theme } from '../themes';
 
@@ -12,9 +13,6 @@ import { Theme } from '../themes';
 interface HeaderProps {
     page: Page; // The currently active page.
     setPage: (page: Page) => void; // A function to change the active page.
-    searchQuery: string; // The current value of the search input.
-    setSearchQuery: (query: string) => void; // A function to update the search query.
-    theme: Theme; // The active theme object for styling.
 }
 
 // Defines the props for the internal NavLink component.
@@ -52,10 +50,13 @@ const NavLink: React.FC<NavLinkProps> = ({ onClick, isActive, children, icon, th
  * @param {HeaderProps} props The properties passed from the App component.
  * @returns {JSX.Element} The rendered header.
  */
-const Header: React.FC<HeaderProps> = ({ page, setPage, searchQuery, setSearchQuery, theme }) => {
+const Header: React.FC<HeaderProps> = ({ page, setPage }) => {
+    // Select the necessary state and actions directly from the Zustand store.
+    const { searchQuery, setSearchQuery, activeTheme } = useAppStore();
+
     return (
         // The header has a sticky position to stay at the top of the viewport when scrolling.
-        <header className={`${theme.headerBg} shadow-lg border-b ${theme.headerBorder} sticky top-0 z-50 transition-colors duration-300`}>
+        <header className={`${activeTheme.headerBg} shadow-lg border-b ${activeTheme.headerBorder} sticky top-0 z-50 transition-colors duration-300`}>
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20 gap-4">
                     {/* Left section: App Icon and Title */}
@@ -68,9 +69,9 @@ const Header: React.FC<HeaderProps> = ({ page, setPage, searchQuery, setSearchQu
 
                     {/* Middle section: Navigation */}
                     <nav className="flex items-center gap-2 sm:gap-4">
-                        <NavLink onClick={() => setPage('dashboard')} isActive={page === 'dashboard'} icon={<DashboardIcon />} theme={theme}>Dashboard</NavLink>
-                        <NavLink onClick={() => setPage('collection')} isActive={page === 'collection'} icon={<CollectionIcon />} theme={theme}>Collection</NavLink>
-                        <NavLink onClick={() => setPage('settings')} isActive={page === 'settings'} icon={<SettingsIcon />} theme={theme}>Settings</NavLink>
+                        <NavLink onClick={() => setPage('dashboard')} isActive={page === 'dashboard'} icon={<DashboardIcon />} theme={activeTheme}>Dashboard</NavLink>
+                        <NavLink onClick={() => setPage('collection')} isActive={page === 'collection'} icon={<CollectionIcon />} theme={activeTheme}>Collection</NavLink>
+                        <NavLink onClick={() => setPage('settings')} isActive={page === 'settings'} icon={<SettingsIcon />} theme={activeTheme}>Settings</NavLink>
                     </nav>
 
                     {/* Right section: Search Bar */}
@@ -86,7 +87,7 @@ const Header: React.FC<HeaderProps> = ({ page, setPage, searchQuery, setSearchQu
                                     placeholder="Search collection..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className={`w-full pl-10 pr-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 ${theme.accentRing} transition-colors`}
+                                    className={`w-full pl-10 pr-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 ${activeTheme.accentRing} transition-colors`}
                                 />
                             </div>
                         )}
