@@ -27,9 +27,9 @@ const FilterControls: React.FC = () => {
         const relevantMiniatures = filters.gameSystem === 'all'
             ? allMiniatures
             : allMiniatures.filter(m => m.gameSystem === filters.gameSystem);
-        const armies = new Set(relevantMiniatures.map(m => m.army));
-        // FIX: Replaced `Array.from` with spread syntax for better type inference to resolve 'type unknown' error.
-        return [...armies].sort();
+        // FIX: Explicitly typing Set<string> and using Array.from to ensure correct type inference for armyOptions.
+        const armies = new Set<string>(relevantMiniatures.map(m => m.army));
+        return Array.from(armies).sort();
     }, [allMiniatures, filters.gameSystem]);
 
     /**
