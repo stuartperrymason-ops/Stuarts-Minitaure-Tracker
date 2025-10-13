@@ -23,15 +23,34 @@ interface FilterControlsProps {
  */
 const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, allMiniatures, allGameSystems, theme }) => {
     
-    // `useMemo` calculates the list of unique army names from all miniatures.
-    // This list is used to populate the datalist for the army filter input, providing autocomplete suggestions.
-    // It only recalculates when `allMiniatures` changes, which is more efficient than calculating on every render.
+    // `useMemo` calculates the list of unique army names.
+    // This list is now dependent on the selected game system. It only shows armies
+    // that exist within the currently filtered game system.
+    // It recalculates only when `allMiniatures` or `filters.gameSystem` changes.
     const armyOptions = React.useMemo(() => {
+        // Determine which miniatures to consider based on the game system filter.
+        const relevantMiniatures = filters.gameSystem === 'all'
+            ? allMiniatures // If 'All Systems' is selected, use the entire collection.
+            : allMiniatures.filter(m => m.gameSystem === filters.gameSystem); // Otherwise, filter miniatures by the selected system.
+
         // A `Set` is used here to automatically handle uniqueness.
-        const armies = new Set(allMiniatures.map(m => m.army));
-        // Convert the Set back to an array and sort it alphabetically.
+        const armies = new Set(relevantMiniatures.map(m => m.army));
+        // Convert the Set back to an array and sort it alphabetically for the datalist suggestions.
         return Array.from(armies).sort();
-    }, [allMiniatures]);
+    }, [allMiniatures, filters.gameSystem]); // The dependency array ensures this runs only when needed.
+
+    /**
+     * Handles changes to the game system dropdown.
+     * When a new game system is selected, it resets the army filter to prevent
+     * a situation where an invalid army is selected for the new system.
+     * @param {React.ChangeEvent<HTMLSelectElement>} e The select change event.
+     */
+    const handleGameSystemChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setFilters({
+            gameSystem: e.target.value,
+            army: '' // Reset the army filter to an empty string.
+        });
+    };
 
     return (
         <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-gray-900/50 rounded-lg">
@@ -41,9 +60,8 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, al
                 <select 
                     id="gameSystemFilter" 
                     value={filters.gameSystem} 
-                    // When the value changes, call `setFilters` from the parent to update the state.
-                    // The spread operator `...filters` ensures we don't lose other filter values (like the army filter).
-                    onChange={e => setFilters({...filters, gameSystem: e.target.value})}
+                    // When the value changes, call the dedicated handler.
+                    onChange={handleGameSystemChange}
                     className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
                 >
                     <option value="all">All Systems</option>
@@ -60,6 +78,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, al
                     list="army-options" // Links this input to the datalist below for autocomplete.
                     placeholder="Filter by army..."
                     value={filters.army}
+                    // The spread operator `...filters` ensures we don't lose the gameSystem filter value.
                     onChange={e => setFilters({...filters, army: e.target.value})}
                     className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
                 />
