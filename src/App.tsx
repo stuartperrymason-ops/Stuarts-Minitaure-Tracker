@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { useState, useMemo, useCallback, useEffect } from 'react';
+// FIX: The `GameSystem` enum was removed and replaced with a string type. Removing it from the import.
 import { Miniature, Filter } from './types';
 import Header from './components/Header';
 import DashboardPage from './pages/DashboardPage';
@@ -78,26 +79,55 @@ const App: React.FC = () => {
     // useMemo is a hook that memoizes the result of a function. It re-runs the function only if a dependency changes.
     // This is used for performance optimization, preventing expensive calculations on every render.
     const activeTheme: Theme = useMemo(() => {
-        const gameSystemKey = filters.gameSystem;
-        // Check for a specific army theme first.
+        // Priority 1: Check for an exact, case-insensitive match for an army theme.
         if (filters.army) {
             const lowercasedArmy = filters.army.toLowerCase().trim();
-            if (lowercasedArmy && ARMY_THEMES[gameSystemKey]) {
-                const armyThemesForSystem = ARMY_THEMES[gameSystemKey];
-                const armyThemeKey = Object.keys(armyThemesForSystem).find(key => key.toLowerCase() === lowercasedArmy);
-                if (armyThemeKey) {
-                    const baseTheme = THEMES[gameSystemKey] || DEFAULT_THEME;
-                    const armyOverrides = armyThemesForSystem[armyThemeKey];
-                    // Merge the base game system theme with army-specific overrides.
-                    return { ...baseTheme, ...armyOverrides };
+            if (lowercasedArmy) {
+                // If a specific game system is selected, look for an army theme ONLY within it. This is more predictable.
+                if (filters.gameSystem !== 'all') {
+                    // FIX: `GameSystem` is no longer an enum, so the cast is unnecessary and incorrect. `filters.gameSystem` is a string here.
+                    const armyThemesForSystem = ARMY_THEMES[filters.gameSystem];
+                    if (armyThemesForSystem) {
+                        const armyThemeKey = Object.keys(armyThemesForSystem).find(
+                            key => key.toLowerCase() === lowercasedArmy
+                        );
+                        if (armyThemeKey) {
+                            // Found a theme. Base it on the selected game system's theme.
+                            // FIX: `GameSystem` is no longer an enum, so the cast is unnecessary and incorrect. `filters.gameSystem` is a string here.
+                            const baseTheme = THEMES[filters.gameSystem] || DEFAULT_THEME;
+                            const armyOverrides = armyThemesForSystem[armyThemeKey];
+                            return { ...baseTheme, ...armyOverrides };
+                        }
+                    }
+                } 
+                // If game system is 'all', search across all systems. This allows finding an army theme without selecting its system first.
+                else {
+                    for (const gameSystem in ARMY_THEMES) {
+                        // FIX: `GameSystem` is no longer an enum, so the cast is unnecessary and incorrect. `gameSystem` is already a string key.
+                        const gs = gameSystem;
+                        const armyThemesForSystem = ARMY_THEMES[gs];
+                        if (armyThemesForSystem) {
+                            const armyThemeKey = Object.keys(armyThemesForSystem).find(
+                                key => key.toLowerCase() === lowercasedArmy
+                            );
+                            if (armyThemeKey) {
+                                // Found a matching army. Get its base theme and apply overrides.
+                                const baseTheme = THEMES[gs] || DEFAULT_THEME;
+                                const armyOverrides = armyThemesForSystem[armyThemeKey];
+                                return { ...baseTheme, ...armyOverrides };
+                            }
+                        }
+                    }
                 }
             }
         }
-        // If no army theme, fall back to the game system theme.
-        if (filters.gameSystem !== 'all' && THEMES[gameSystemKey]) {
-            return THEMES[gameSystemKey];
+
+        // Priority 2: Fall back to the game system theme if one is selected.
+        if (filters.gameSystem !== 'all' && THEMES[filters.gameSystem]) {
+            return THEMES[filters.gameSystem];
         }
-        // If no specific theme applies, use the default.
+
+        // Priority 3: Fall back to the default theme.
         return DEFAULT_THEME;
     }, [filters.gameSystem, filters.army]);
     
