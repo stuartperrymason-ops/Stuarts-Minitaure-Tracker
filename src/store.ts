@@ -27,6 +27,8 @@ interface AppState {
     isBulkEditing: boolean;
     isGalleryOpen: boolean;
     galleryMiniature: Miniature | null;
+    isLoading: boolean;
+    error: string | null;
     
     // Derived State (getters)
     activeTheme: Theme;
@@ -70,6 +72,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     isBulkEditing: false,
     isGalleryOpen: false,
     galleryMiniature: null,
+    isLoading: true,
+    error: null,
 
     // --- DERIVED STATE ---
     get activeTheme() {
@@ -146,6 +150,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     // --- ACTIONS ---
     fetchInitialData: async () => {
+        set({ isLoading: true, error: null });
         try {
             const [miniaturesRes, gameSystemsRes] = await Promise.all([
                 axios.get('/api/miniatures'),
@@ -154,10 +159,17 @@ export const useAppStore = create<AppState>((set, get) => ({
             set({
                 miniatures: miniaturesRes.data,
                 gameSystems: gameSystemsRes.data.map((gs: any) => gs.name),
+                isLoading: false,
             });
         } catch (error) {
             console.error("Failed to fetch initial data:", error);
-            // Optionally, set some error state here
+            let errorMessage = 'An unexpected error occurred while fetching data.';
+            if (axios.isAxiosError(error)) {
+                 errorMessage = error.response?.data?.message || 'Failed to connect to the server. Please ensure it is running and properly configured.';
+            } else if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+            set({ isLoading: false, error: errorMessage });
         }
     },
 
