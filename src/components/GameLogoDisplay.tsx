@@ -49,7 +49,7 @@ const GameLogoDisplay: React.FC<GameLogoDisplayProps> = ({ gameSystem }) => {
         // The container div handles the positioning and fade-in/out transition.
         // Its opacity is changed based on whether a logoSrc is available.
         <div 
-            className={`absolute inset-0 flex items-center justify-center z-0 transition-opacity duration-500 ${logoSrc ? 'opacity-10' : 'opacity-0'}`}
+            className={`absolute inset-0 flex items-center justify-center z-0 transition-opacity duration-500 ${logoSrc ? 'opacity-20' : 'opacity-0'}`}
             aria-hidden="true" // Hide from screen readers as it is purely decorative.
         >
             <div className="w-1/2 max-w-lg text-gray-500">
