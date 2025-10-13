@@ -2,14 +2,10 @@
  * @file src/components/GameLogoDisplay.tsx
  * This component is responsible for displaying a large, faded logo in the background
  * of the collection page, corresponding to the currently selected game system filter.
+ * It dynamically constructs an image path to a JPEG file based on the game system name.
  */
 
 import React from 'react';
-import { 
-    Warhammer40kLogo, AgeOfSigmarLogo, BattletechLogo, StarWarsLegionLogo, 
-    MarvelCrisisProtocolLogo, MiddleEarthSBGLogo, OldWorldLogo, ShatterpointLogo,
-    GenericSciFiLogo
-} from './GameSystemLogos';
 
 // Defines the props for the GameLogoDisplay component.
 interface GameLogoDisplayProps {
@@ -17,57 +13,56 @@ interface GameLogoDisplayProps {
 }
 
 /**
+ * Converts a game system name into a URL-friendly filename for the logo.
+ * Example: "Warhammer: The Old World" -> "warhammer-the-old-world"
+ * @param {string} name The full name of the game system.
+ * @returns {string} A sanitized string suitable for a filename.
+ */
+const generateFilename = (name: string): string => {
+    return name
+        .toLowerCase()
+        // Replace common characters/words for better matching
+        .replace(/&/g, 'and') 
+        .replace(/[:]/g, '') // Remove colons
+        // Generic cleanup
+        .replace(/[^\w\s-]/g, '') // Remove remaining punctuation except hyphens and whitespace
+        .replace(/[\s_]+/g, '-') // Replace spaces and underscores with a single hyphen
+        .replace(/--+/g, '-'); // Replace multiple hyphens with a single one
+};
+
+/**
  * Displays a game-specific logo as a background watermark.
  * @param {GameLogoDisplayProps} props The component's properties.
- * @returns {JSX.Element | null} The rendered logo SVG or null.
+ * @returns {JSX.Element} The rendered logo image container.
  */
 const GameLogoDisplay: React.FC<GameLogoDisplayProps> = ({ gameSystem }) => {
     
-    /**
-     * Selects the appropriate logo component based on the gameSystem prop.
-     * @returns {JSX.Element | null} The logo component to render, or null if no specific logo is found.
-     */
-    const renderLogo = () => {
-        // A switch statement maps the string name of the game system to its corresponding logo component.
-        switch (gameSystem) {
-            case 'Warhammer 40,000':
-            case 'Legion Imperialis':
-                return <Warhammer40kLogo />;
-            case 'Warhammer: Age of Sigmar':
-            case 'Conquest - Last Argument of Kings':
-                return <AgeOfSigmarLogo />;
-            case 'Warhammer: The Old World':
-                return <OldWorldLogo />;
-            case 'Star Wars: Legion':
-                return <StarWarsLegionLogo />;
-            case 'Star Wars: Shatterpoint':
-                return <ShatterpointLogo />;
-            case 'Marvel: Crisis Protocol':
-                return <MarvelCrisisProtocolLogo />;
-            case 'Battletech':
-                return <BattletechLogo />;
-            case 'Middle-earth Strategy Battle Game':
-                return <MiddleEarthSBGLogo />;
-            case 'Dune':
-            case 'Trench Crusade':
-                 return <GenericSciFiLogo />;
-            case 'all': // When "All Systems" is selected, no logo is shown.
-            default:
-                return null;
-        }
-    };
-    
-    const logo = renderLogo();
+    // Determine the source of the logo based on the selected game system.
+    let logoSrc: string | null = null;
+    if (gameSystem !== 'all') {
+        const filename = generateFilename(gameSystem);
+        // This assumes that a 'game-logos' directory exists in the public assets folder.
+        logoSrc = `/game-logos/${filename}.jpeg`;
+    }
 
     return (
-        // The logo is positioned absolutely to fill the container and placed behind the main content (z-0).
-        // Its opacity is transitioned for a smooth fade-in/out effect when the filter changes.
+        // The container div handles the positioning and fade-in/out transition.
+        // Its opacity is changed based on whether a logoSrc is available.
         <div 
-            className={`absolute inset-0 flex items-center justify-center z-0 transition-opacity duration-500 ${logo ? 'opacity-10' : 'opacity-0'}`}
+            className={`absolute inset-0 flex items-center justify-center z-0 transition-opacity duration-500 ${logoSrc ? 'opacity-10' : 'opacity-0'}`}
             aria-hidden="true" // Hide from screen readers as it is purely decorative.
         >
             <div className="w-1/2 max-w-lg text-gray-500">
-                {logo}
+                {/* Only render the image tag if there is a source to prevent broken image icons. */}
+                {logoSrc && (
+                    <img 
+                        src={logoSrc} 
+                        alt={`${gameSystem} logo`} 
+                        className="w-full h-auto object-contain animate-fade-in" 
+                        // Using the key forces a re-render and re-triggers the animation when the logo changes.
+                        key={logoSrc}
+                    />
+                )}
             </div>
         </div>
     );
