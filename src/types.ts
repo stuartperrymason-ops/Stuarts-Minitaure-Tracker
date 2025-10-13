@@ -1,11 +1,11 @@
 /**
  * @file src/types.ts
  * This file defines the core data structures and types used throughout the application.
- * Using TypeScript for type safety helps prevent common bugs and improves code readability.
+ * Centralizing type definitions improves code clarity, reusability, and type safety.
  */
 
-// A TypeScript `enum` is a way of giving more friendly names to sets of numeric values.
-// Here, we use a string enum for better readability and debugging.
+// Defines the possible completion statuses for a miniature.
+// Using a string enum allows for easy mapping to UI elements and database storage.
 export enum Status {
     Purchased = "Purchased",
     Printed = "Printed",
@@ -16,20 +16,26 @@ export enum Status {
     ReadyForGame = "Ready for Game"
 }
 
-// An `interface` defines the shape of an object.
-// This ensures that any object treated as a 'Miniature' has these specific properties.
+// The main data interface for a miniature entry in the collection.
 export interface Miniature {
-    id: string; // A unique identifier for the miniature entry.
-    modelName: string; // The name of the model or unit.
-    gameSystem: string; // The game system the miniature belongs to. Changed from enum to string to support dynamic, user-added systems.
-    army: string; // The army or faction.
-    status: Status; // The current hobby progress status, using the Status enum.
-    modelCount: number; // The number of models in this unit/entry.
-    notes?: string; // An optional field for user notes (e.g., paint recipes, lore). The '?' makes it optional.
+    _id: string;         // Unique identifier from MongoDB.
+    modelName: string;   // Name of the model or unit.
+    gameSystem: string;  // The game system the miniature belongs to (e.g., "Warhammer 40,000").
+    army: string;        // The army or faction (e.g., "Ultramarines").
+    status: Status;      // The current hobby progress status.
+    modelCount: number;  // The number of individual models in this entry.
+    notes?: string;      // Optional user notes.
+    images?: string[]; // An array of URLs to associated images.
 }
 
-// Defines the shape of the filters object used on the Collection page.
+// Defines the structure for filtering the collection view.
 export interface Filter {
-    gameSystem: string | 'all'; // Can be a specific game system string or 'all' to show everything.
-    army: string; // The text used to filter by army/faction name.
+    gameSystem: string; // Can be a specific system name or 'all'.
+    army: string;       // A string to filter by army name (case-insensitive substring match).
 }
+
+// Defines the structure for sorting the collection view.
+export type SortConfig = {
+    key: keyof Miniature; // The property of the Miniature interface to sort by.
+    direction: 'asc' | 'desc'; // The sorting direction.
+};

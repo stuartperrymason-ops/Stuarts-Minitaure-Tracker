@@ -1,40 +1,33 @@
 /**
  * @file src/components/MiniatureList.tsx
- * This component displays the collection of miniatures in a sortable, interactive table.
- * It includes features for editing, deleting, bulk selection, and viewing notes.
+ * This component renders the main table for displaying the miniature collection.
+ * It includes features for sorting, editing, deleting, and selecting items for bulk actions.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Miniature } from '../types';
+import { useAppStore } from '../store';
 import { STATUS_COLORS } from '../constants';
-import { PencilIcon, TrashIcon, SortIcon, SortAscIcon, SortDescIcon, ChevronDownIcon, ChevronRightIcon } from './Icons';
+import { PencilIcon, TrashIcon, SortIcon, SortAscIcon, SortDescIcon, PhotographIcon } from './Icons';
 
-// Defines the props expected by the MiniatureList component.
-interface MiniatureListProps {
-    miniatures: Miniature[]; // The array of miniatures to display (already filtered and sorted).
-    onEdit: (miniature: Miniature) => void; // Callback to handle editing a miniature.
-    onDelete: (id: string) => void; // Callback to handle deleting a miniature.
-    onSort: (key: keyof Miniature) => void; // Callback to handle sorting the list.
-    sortConfig: { key: keyof Miniature; direction: 'asc' | 'desc' } | null; // The current sort configuration.
-    selectedIds: Set<string>; // A Set of IDs for the miniatures that are currently selected.
-    onSelect: (id: string) => void; // Callback to toggle the selection of a single miniature.
-    onSelectAll: () => void; // Callback to toggle the selection of all visible miniatures.
+// Defines the props for the reusable SortableHeader component.
+interface SortableHeaderProps {
+    title: string;
+    columnKey: keyof Miniature;
 }
 
 /**
- * A reusable component for table headers that allows sorting when clicked.
- * @param {{ title: string, columnKey: keyof Miniature, onSort: Function, sortConfig: object }} props The component props.
- * @returns {JSX.Element} A sortable table header cell.
+ * A reusable header cell component for the table that includes sorting controls.
+ * @param {SortableHeaderProps} props The component's properties.
+ * @returns {JSX.Element} The rendered table header cell.
  */
-const SortableHeader: React.FC<{
-    title: string;
-    columnKey: keyof Miniature;
-    onSort: (key: keyof Miniature) => void;
-    sortConfig: MiniatureListProps['sortConfig'];
-}> = ({ title, columnKey, onSort, sortConfig }) => {
-    // Determine if this header's column is the one currently being sorted.
+const SortableHeader: React.FC<SortableHeaderProps> = ({ title, columnKey }) => {
+    // Select state and actions from the Zustand store.
+    const { sortConfig, setSortConfig } = useAppStore();
+
+    // Determine if this column is the one currently being sorted.
     const isSorted = sortConfig?.key === columnKey;
-    // Choose the appropriate sort icon based on the current sort state.
+    // Choose the correct icon based on the current sort state.
     const Icon = isSorted 
         ? (sortConfig.direction === 'asc' ? SortAscIcon : SortDescIcon) 
         : SortIcon;
@@ -42,7 +35,7 @@ const SortableHeader: React.FC<{
     return (
         <th scope="col" className="px-6 py-3">
             <button 
-                onClick={() => onSort(columnKey)} 
+                onClick={() => setSortConfig(columnKey)} 
                 className="flex items-center gap-2 w-full text-left text-xs text-cyan-300 uppercase focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded-md p-1 -m-1"
             >
                 {title}
@@ -54,31 +47,23 @@ const SortableHeader: React.FC<{
 
 /**
  * The main component for displaying the list of miniatures.
- * @param {MiniatureListProps} props The properties passed to the component.
- * @returns {JSX.Element} The rendered table of miniatures.
+ * @returns {JSX.Element} The rendered table or a placeholder message.
  */
-const MiniatureList: React.FC<MiniatureListProps> = ({ miniatures, onEdit, onDelete, onSort, sortConfig, selectedIds, onSelect, onSelectAll }) => {
-    // State to keep track of which miniatures have their notes section expanded.
-    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-
-    /**
-     * Toggles the expanded state for a given miniature's notes.
-     * @param {string} id The ID of the miniature to toggle.
-     */
-    const toggleExpand = (id: string) => {
-        setExpandedIds(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(id)) {
-                newSet.delete(id); // If already expanded, collapse it.
-            } else {
-                newSet.add(id); // If collapsed, expand it.
-            }
-            return newSet;
-        });
-    };
+const MiniatureList: React.FC = () => {
+    // Select all necessary state and actions from the store.
+    const { 
+        filteredMiniatures, 
+        startEditing, 
+        deleteMiniature,
+        selectedIds,
+        toggleSelection,
+        isAllSelected,
+        toggleSelectAll,
+        openImageGallery,
+    } = useAppStore();
     
-    // If there are no miniatures to display, show a message instead of the table.
-    if (miniatures.length === 0) {
+    // If the filtered list is empty, show a message instead of the table.
+    if (filteredMiniatures.length === 0) {
         return <p className="text-center text-gray-500 py-8">No miniatures match the current filters. Add one to get started!</p>;
     }
     
@@ -87,83 +72,80 @@ const MiniatureList: React.FC<MiniatureListProps> = ({ miniatures, onEdit, onDel
             <table className="w-full text-sm text-left text-gray-300">
                 <thead className="bg-gray-700/50">
                     <tr>
-                        {/* Header for the "select all" checkbox */}
-                        <th scope="col" className="px-6 py-3">
-                            <input
-                                type="checkbox"
-                                // The checkbox is checked if all visible miniatures are selected.
-                                checked={miniatures.length > 0 && miniatures.every(m => selectedIds.has(m.id))}
-                                onChange={onSelectAll}
-                                className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-cyan-600 focus:ring-cyan-500"
-                            />
+                        <th scope="col" className="p-4">
+                            <div className="flex items-center">
+                                <input
+                                    id="checkbox-all"
+                                    type="checkbox"
+                                    className="w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
+                                    checked={isAllSelected}
+                                    onChange={toggleSelectAll}
+                                />
+                                <label htmlFor="checkbox-all" className="sr-only">select all items</label>
+                            </div>
                         </th>
-                        {/* Header for the expand/collapse notes icon */}
-                        <th scope="col" className="w-12 px-6 py-3"></th>
-                        <SortableHeader title="Model Name" columnKey="modelName" onSort={onSort} sortConfig={sortConfig} />
-                        <SortableHeader title="Game System" columnKey="gameSystem" onSort={onSort} sortConfig={sortConfig} />
-                        <SortableHeader title="Army" columnKey="army" onSort={onSort} sortConfig={sortConfig} />
-                        <SortableHeader title="Count" columnKey="modelCount" onSort={onSort} sortConfig={sortConfig} />
-                        <SortableHeader title="Status" columnKey="status" onSort={onSort} sortConfig={sortConfig} />
+                        <th scope="col" className="px-6 py-3 text-xs text-cyan-300 uppercase">Thumbnail</th>
+                        <SortableHeader title="Model Name" columnKey="modelName" />
+                        <SortableHeader title="Game System" columnKey="gameSystem" />
+                        <SortableHeader title="Army" columnKey="army" />
+                        <SortableHeader title="Count" columnKey="modelCount" />
+                        <SortableHeader title="Status" columnKey="status" />
                         <th scope="col" className="px-6 py-3 text-xs text-cyan-300 uppercase">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {/* Map over the miniatures array to create a table row for each one. */}
-                    {miniatures.map(mini => (
-                        // React.Fragment is used to group the main row and the optional notes row without adding extra nodes to the DOM.
-                        <React.Fragment key={mini.id}>
-                            <tr className="bg-gray-800/50 border-b border-gray-700 hover:bg-gray-700/50 transition-colors">
-                                {/* Checkbox for selecting an individual row */}
-                                <td className="px-6 py-4">
+                    {filteredMiniatures.map(mini => (
+                        <tr 
+                            key={mini._id} 
+                            className={`border-b border-gray-700 transition-colors ${
+                                selectedIds.includes(mini._id) ? 'bg-cyan-900/50' : 'bg-gray-800/50 hover:bg-gray-700/50'
+                            }`}
+                        >
+                            <td className="w-4 p-4">
+                                 <div className="flex items-center">
                                     <input
+                                        id={`checkbox-${mini._id}`}
                                         type="checkbox"
-                                        checked={selectedIds.has(mini.id)}
-                                        onChange={() => onSelect(mini.id)}
-                                        className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-cyan-600 focus:ring-cyan-500"
+                                        className="w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
+                                        checked={selectedIds.includes(mini._id)}
+                                        onChange={() => toggleSelection(mini._id)}
                                     />
-                                </td>
-                                {/* Cell for the expand/collapse notes button */}
-                                <td className="px-6 py-4">
-                                    {/* The button is only rendered if the miniature has notes. */}
-                                    {mini.notes && (
-                                        <button onClick={() => toggleExpand(mini.id)} className="text-gray-400 hover:text-white" aria-expanded={expandedIds.has(mini.id)} aria-controls={`notes-${mini.id}`}>
-                                            {expandedIds.has(mini.id) ? <ChevronDownIcon /> : <ChevronRightIcon />}
-                                        </button>
+                                    <label htmlFor={`checkbox-${mini._id}`} className="sr-only">select item</label>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4">
+                                <button
+                                    onClick={() => mini.images && mini.images.length > 0 && openImageGallery(mini)}
+                                    className="w-16 h-12 flex items-center justify-center bg-gray-700 rounded-md overflow-hidden disabled:cursor-default"
+                                    disabled={!mini.images || mini.images.length === 0}
+                                    aria-label="View images"
+                                >
+                                    {mini.images && mini.images.length > 0 ? (
+                                        <img src={mini.images[0]} alt={mini.modelName} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <PhotographIcon />
                                     )}
-                                </td>
-                                <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap">{mini.modelName}</th>
-                                <td className="px-6 py-4">{mini.gameSystem}</td>
-                                <td className="px-6 py-4">{mini.army}</td>
-                                <td className="px-6 py-4">{mini.modelCount}</td>
-                                <td className="px-6 py-4">
-                                    <span className="flex items-center gap-2">
-                                        <span style={{ backgroundColor: STATUS_COLORS[mini.status] }} className="h-3 w-3 rounded-full"></span>
-                                        {mini.status}
-                                    </span>
-                                </td>
-                                {/* Action buttons for edit and delete */}
-                                <td className="px-6 py-4 flex items-center gap-4">
-                                    <button onClick={() => onEdit(mini)} className="font-medium text-blue-400 hover:underline">
-                                        <PencilIcon />
-                                    </button>
-                                    <button onClick={() => onDelete(mini.id)} className="font-medium text-red-400 hover:underline">
-                                        <TrashIcon />
-                                    </button>
-                                </td>
-                            </tr>
-                            {/* Conditional rendering for the notes row. */}
-                            {mini.notes && expandedIds.has(mini.id) && (
-                                <tr className="bg-gray-800/60" id={`notes-${mini.id}`}>
-                                    {/* The cell spans all columns to create a full-width notes section. */}
-                                    <td colSpan={8} className="px-12 py-4">
-                                        <div className="p-4 bg-gray-900/50 rounded-md">
-                                            <h4 className="font-semibold text-gray-200 mb-2 border-b border-gray-700 pb-1">Notes:</h4>
-                                            <p className="text-gray-300 whitespace-pre-wrap">{mini.notes}</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </React.Fragment>
+                                </button>
+                            </td>
+                            <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap">{mini.modelName}</th>
+                            <td className="px-6 py-4">{mini.gameSystem}</td>
+                            <td className="px-6 py-4">{mini.army}</td>
+                            <td className="px-6 py-4">{mini.modelCount}</td>
+                            <td className="px-6 py-4">
+                                <span className="flex items-center gap-2">
+                                    <span style={{ backgroundColor: STATUS_COLORS[mini.status] }} className="h-3 w-3 rounded-full"></span>
+                                    {mini.status}
+                                </span>
+                            </td>
+                            <td className="px-6 py-4 flex items-center gap-4">
+                                <button onClick={() => startEditing(mini)} className="font-medium text-blue-400 hover:underline" title="Edit">
+                                    <PencilIcon />
+                                </button>
+                                <button onClick={() => window.confirm('Are you sure you want to delete this miniature?') && deleteMiniature(mini._id)} className="font-medium text-red-400 hover:underline" title="Delete">
+                                    <TrashIcon />
+                                </button>
+                            </td>
+                        </tr>
                     ))}
                 </tbody>
             </table>
