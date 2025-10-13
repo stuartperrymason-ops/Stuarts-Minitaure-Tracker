@@ -9,9 +9,10 @@ interface MiniatureListProps {
     onDelete: (id: string) => void;
     onSort: (key: keyof Miniature) => void;
     sortConfig: { key: keyof Miniature; direction: 'asc' | 'desc' } | null;
+    // FIX: Add props to handle bulk selection state.
     selectedIds: Set<string>;
     onSelect: (id: string) => void;
-    onSelectAll: (filteredIds: string[]) => void;
+    onSelectAll: () => void;
 }
 
 const SortableHeader: React.FC<{
@@ -38,15 +39,9 @@ const SortableHeader: React.FC<{
     );
 };
 
+
 const MiniatureList: React.FC<MiniatureListProps> = ({ miniatures, onEdit, onDelete, onSort, sortConfig, selectedIds, onSelect, onSelectAll }) => {
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-
-    if (miniatures.length === 0) {
-        return <p className="text-center text-gray-500 py-8">No miniatures match the current filters. Add one to get started!</p>;
-    }
-    
-    const filteredIds = miniatures.map(m => m.id);
-    const isAllSelected = selectedIds.size > 0 && selectedIds.size === filteredIds.length && filteredIds.length > 0;
 
     const toggleExpand = (id: string) => {
         setExpandedIds(prev => {
@@ -59,25 +54,26 @@ const MiniatureList: React.FC<MiniatureListProps> = ({ miniatures, onEdit, onDel
             return newSet;
         });
     };
-
+    
+    if (miniatures.length === 0) {
+        return <p className="text-center text-gray-500 py-8">No miniatures match the current filters. Add one to get started!</p>;
+    }
+    
     return (
         <div className="overflow-x-auto shadow-md rounded-lg">
             <table className="w-full text-sm text-left text-gray-300">
                 <thead className="bg-gray-700/50">
                     <tr>
-                        <th scope="col" className="p-4">
-                            <div className="flex items-center">
-                                <input 
-                                    id="checkbox-all" 
-                                    type="checkbox" 
-                                    className="w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
-                                    checked={isAllSelected}
-                                    onChange={() => onSelectAll(filteredIds)}
-                                />
-                                <label htmlFor="checkbox-all" className="sr-only">checkbox</label>
-                            </div>
+                        {/* FIX: Add a header checkbox for "select all" functionality. */}
+                        <th scope="col" className="px-6 py-3">
+                            <input
+                                type="checkbox"
+                                checked={miniatures.length > 0 && miniatures.every(m => selectedIds.has(m.id))}
+                                onChange={onSelectAll}
+                                className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-cyan-600 focus:ring-cyan-500"
+                            />
                         </th>
-                        <th scope="col" className="w-12 px-4 py-3"></th>
+                        <th scope="col" className="w-12 px-6 py-3"></th>
                         <SortableHeader title="Model Name" columnKey="modelName" onSort={onSort} sortConfig={sortConfig} />
                         <SortableHeader title="Game System" columnKey="gameSystem" onSort={onSort} sortConfig={sortConfig} />
                         <SortableHeader title="Army" columnKey="army" onSort={onSort} sortConfig={sortConfig} />
@@ -89,22 +85,19 @@ const MiniatureList: React.FC<MiniatureListProps> = ({ miniatures, onEdit, onDel
                 <tbody>
                     {miniatures.map(mini => (
                         <React.Fragment key={mini.id}>
-                            <tr className={`border-b border-gray-700 transition-colors ${selectedIds.has(mini.id) ? 'bg-cyan-900/50' : 'bg-gray-800/50 hover:bg-gray-700/50'}`}>
-                                <td className="w-4 p-4">
-                                    <div className="flex items-center">
-                                        <input 
-                                            id={`checkbox-table-${mini.id}`}
-                                            type="checkbox" 
-                                            className="w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500" 
-                                            checked={selectedIds.has(mini.id)}
-                                            onChange={() => onSelect(mini.id)}
-                                        />
-                                        <label htmlFor={`checkbox-table-${mini.id}`} className="sr-only">checkbox</label>
-                                    </div>
+                            <tr className="bg-gray-800/50 border-b border-gray-700 hover:bg-gray-700/50 transition-colors">
+                                {/* FIX: Add a checkbox for selecting individual rows. */}
+                                <td className="px-6 py-4">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.has(mini.id)}
+                                        onChange={() => onSelect(mini.id)}
+                                        className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-cyan-600 focus:ring-cyan-500"
+                                    />
                                 </td>
-                                <td className="px-4 py-4">
+                                <td className="px-6 py-4">
                                     {mini.notes && (
-                                        <button onClick={() => toggleExpand(mini.id)} className="text-gray-400 hover:text-white">
+                                        <button onClick={() => toggleExpand(mini.id)} className="text-gray-400 hover:text-white" aria-expanded={expandedIds.has(mini.id)} aria-controls={`notes-${mini.id}`}>
                                             {expandedIds.has(mini.id) ? <ChevronDownIcon /> : <ChevronRightIcon />}
                                         </button>
                                     )}
@@ -128,9 +121,10 @@ const MiniatureList: React.FC<MiniatureListProps> = ({ miniatures, onEdit, onDel
                                     </button>
                                 </td>
                             </tr>
-                            {mini.notes && (
-                                <tr className={`${expandedIds.has(mini.id) ? '' : 'hidden'} ${selectedIds.has(mini.id) ? 'bg-cyan-900/50' : 'bg-gray-800/50'}`}>
-                                    <td colSpan={9} className="px-6 py-4">
+                            {mini.notes && expandedIds.has(mini.id) && (
+                                <tr className="bg-gray-800/60" id={`notes-${mini.id}`}>
+                                    {/* FIX: Adjust colSpan to account for the new checkbox column. */}
+                                    <td colSpan={8} className="px-12 py-4">
                                         <div className="p-4 bg-gray-900/50 rounded-md">
                                             <h4 className="font-semibold text-gray-200 mb-2 border-b border-gray-700 pb-1">Notes:</h4>
                                             <p className="text-gray-300 whitespace-pre-wrap">{mini.notes}</p>

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Miniature, Filter, GameSystem } from '../types';
+// FIX: Remove unused GameSystem import.
+import { Miniature, Filter } from '../types';
 import { Theme } from '../themes';
 
 interface FilterControlsProps {
@@ -23,7 +24,8 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, al
                 <select 
                     id="gameSystemFilter" 
                     value={filters.gameSystem} 
-                    onChange={e => setFilters({...filters, gameSystem: e.target.value as GameSystem | 'all'})}
+                    // FIX: Remove `as GameSystem` cast as gameSystem is now a string.
+                    onChange={e => setFilters({...filters, gameSystem: e.target.value})}
                     className={`w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
                 >
                     <option value="all">All Systems</option>

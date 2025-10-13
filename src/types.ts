@@ -1,4 +1,5 @@
-export type GameSystem = string;
+// FIX: Remove GameSystem enum. Game systems are now fetched as strings from the database.
+// This makes the system more flexible and removes the need to update the enum for new games.
 
 export enum Status {
     Purchased = "Purchased",
@@ -13,7 +14,8 @@ export enum Status {
 export interface Miniature {
     id: string;
     modelName: string;
-    gameSystem: GameSystem;
+    // FIX: Change GameSystem type from enum to string to support dynamic server-side data.
+    gameSystem: string;
     army: string;
     status: Status;
     modelCount: number;
@@ -21,6 +23,7 @@ export interface Miniature {
 }
 
 export interface Filter {
-    gameSystem: GameSystem | 'all';
+    // FIX: Change GameSystem type from enum to string.
+    gameSystem: string | 'all';
     army: string;
 }

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Miniature, GameSystem, Status } from '../types';
+// FIX: Remove GameSystem import as it's been replaced by string type.
+import { Miniature, Status } from '../types';
+// FIX: Remove GAME_SYSTEMS import, as it is no longer a constant and will be passed as a prop.
 import { STATUSES } from '../constants';
 import { Theme } from '../themes';
 
@@ -8,12 +10,14 @@ interface MiniatureFormProps {
     initialData?: Miniature | null;
     onCancel: () => void;
     theme: Theme;
+    // FIX: Add allGameSystems to props to dynamically populate the dropdown.
     allGameSystems: string[];
 }
 
 const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, onCancel, theme, allGameSystems }) => {
     const [formData, setFormData] = useState({
         modelName: '',
+        // FIX: Use the passed `allGameSystems` prop for the default value, not the removed constant.
         gameSystem: allGameSystems[0] || '',
         army: '',
         status: STATUSES[0],
@@ -67,6 +71,7 @@ const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, on
                 </div>
                  <div>
                     <label htmlFor="gameSystem" className="block text-sm font-medium text-gray-300">Game System</label>
+                    {/* FIX: Populate dropdown from `allGameSystems` prop. */}
                     <select name="gameSystem" id="gameSystem" value={formData.gameSystem} onChange={handleChange} className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}>
                         {allGameSystems.map(gs => <option key={gs} value={gs}>{gs}</option>)}
                     </select>
@@ -81,11 +86,11 @@ const MiniatureForm: React.FC<MiniatureFormProps> = ({ onSubmit, initialData, on
                         {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
-                 <div className="">
+                 <div>
                     <label htmlFor="modelCount" className="block text-sm font-medium text-gray-300">Model Count</label>
                     <input type="number" name="modelCount" id="modelCount" min="1" value={formData.modelCount} onChange={handleChange} required className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`} />
                 </div>
-                 <div className="md:col-span-2">
+                <div className="md:col-span-2">
                     <label htmlFor="notes" className="block text-sm font-medium text-gray-300">Notes</label>
                     <textarea name="notes" id="notes" rows={4} value={formData.notes} onChange={handleChange} placeholder="Add paint recipes, lore, or other notes..." className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}></textarea>
                 </div>

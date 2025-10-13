@@ -6,7 +6,8 @@ import DashboardPage from './pages/DashboardPage';
 import CollectionPage from './pages/CollectionPage';
 import SettingsPage from './pages/SettingsPage';
 import { THEMES, DEFAULT_THEME, Theme, ARMY_THEMES } from './themes';
-import { GameSystem } from './types';
+// FIX: Remove unused GameSystem import. Game systems are now strings from the server.
+// import { GameSystem } from './types';
 
 export type Page = 'dashboard' | 'collection' | 'settings';
 
@@ -50,7 +51,8 @@ const App: React.FC = () => {
     }, []);
 
     const activeTheme: Theme = useMemo(() => {
-        const gameSystemKey = filters.gameSystem as GameSystem;
+        // FIX: Remove `as GameSystem` cast since gameSystem is now a string.
+        const gameSystemKey = filters.gameSystem;
         if (filters.army) {
             const lowercasedArmy = filters.army.toLowerCase().trim();
             if (lowercasedArmy && ARMY_THEMES[gameSystemKey]) {

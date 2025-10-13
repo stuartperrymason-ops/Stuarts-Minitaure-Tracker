@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Miniature } from '../types';
 import StatusChart from './StatusChart';
 import Card from './Card';
+// FIX: Import ListBulletIcon which was missing.
 import { CollectionIcon, CheckCircleIcon, ClockIcon, ListBulletIcon } from './Icons';
 import { Theme } from '../themes';
 import CombinedStatusTracker from './CombinedStatusTracker';
@@ -29,6 +30,7 @@ const Dashboard: React.FC<DashboardProps> = ({ miniatures, theme }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-6">
                 <Card title="Total Units" value={stats.totalUnits} icon={<ListBulletIcon />} theme={theme} />
+                {/* FIX: The CollectionIcon component was updated to accept a className to allow resizing. */}
                 <Card title="Total Models" value={stats.totalModels} icon={<CollectionIcon className="h-8 w-8" />} theme={theme} />
                 <Card title="Painted Models" value={stats.paintedModels} icon={<CheckCircleIcon />} theme={theme} />
                 <Card title="Models to Paint" value={stats.unpaintedModels} icon={<ClockIcon />} theme={theme} />

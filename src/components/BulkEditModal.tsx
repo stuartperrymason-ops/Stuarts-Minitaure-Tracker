@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Status, GameSystem } from '../types';
+// FIX: Remove unused GameSystem enum import.
+import { Status } from '../types';
 import { STATUSES } from '../constants';
 import { Theme } from '../themes';
 import Modal from './Modal';
 
 interface BulkEditModalProps {
     onClose: () => void;
-    onSave: (updates: { status?: Status; army?: string, gameSystem?: GameSystem, notes?: string }) => void;
+    // FIX: Update type to use string for gameSystem.
+    onSave: (updates: { status?: Status; army?: string, gameSystem?: string, notes?: string }) => void;
     theme: Theme;
     selectedCount: number;
     allGameSystems: string[];
@@ -15,12 +17,14 @@ interface BulkEditModalProps {
 const BulkEditModal: React.FC<BulkEditModalProps> = ({ onClose, onSave, theme, selectedCount, allGameSystems }) => {
     const [status, setStatus] = useState<Status | ''>('');
     const [army, setArmy] = useState('');
-    const [gameSystem, setGameSystem] = useState<GameSystem | ''>('');
+    // FIX: Update type to string.
+    const [gameSystem, setGameSystem] = useState<string | ''>('');
     const [notes, setNotes] = useState('');
     const [updateNotes, setUpdateNotes] = useState(false);
 
     const handleSave = () => {
-        const updates: { status?: Status; army?: string; gameSystem?: GameSystem, notes?: string } = {};
+        // FIX: Update type to use string for gameSystem.
+        const updates: { status?: Status; army?: string; gameSystem?: string, notes?: string } = {};
         if (status) {
             updates.status = status;
         }
@@ -50,7 +54,8 @@ const BulkEditModal: React.FC<BulkEditModalProps> = ({ onClose, onSave, theme, s
                     <select
                         id="bulk-gameSystem"
                         value={gameSystem}
-                        onChange={(e) => setGameSystem(e.target.value as GameSystem | '')}
+                        // FIX: Remove type cast.
+                        onChange={(e) => setGameSystem(e.target.value)}
                         className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${theme.accentRing}`}
                     >
                         <option value="">-- No Change --</option>

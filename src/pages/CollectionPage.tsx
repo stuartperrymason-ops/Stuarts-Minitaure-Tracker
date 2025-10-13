@@ -1,14 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { Miniature, Filter, Status, GameSystem } from '../types';
+// FIX: Remove unused GameSystem import.
+import { Miniature, Filter, Status } from '../types';
 import { SortConfig } from '../App';
 import FilterControls from '../components/FilterControls';
 import MiniatureForm from '../components/MiniatureForm';
-import MiniatureList from '../components/MiniatureList';
 import { PlusCircleIcon, UploadIcon, DownloadIcon } from '../components/Icons';
 import { Theme } from '../themes';
 import BulkActionBar from '../components/BulkActionBar';
 import BulkEditModal from '../components/BulkEditModal';
 import { STATUSES } from '../constants';
+import GameLogoDisplay from '../components/GameLogoDisplay';
 
 interface CollectionPageProps {
     filteredMiniatures: Miniature[];
@@ -93,7 +94,7 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
         }
     };
 
-    const handleBulkEdit = async (updates: { status?: Status; army?: string; gameSystem?: GameSystem; notes?: string }) => {
+    const handleBulkEdit = async (updates: { status?: Status; army?: string; gameSystem?: string; notes?: string }) => {
         const idsToUpdate = Array.from(selectedIds);
         const originalMiniatures = [...allMiniatures];
         
@@ -172,12 +173,12 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                     }, {} as Record<string, string>);
     
                     const modelCount = parseInt(row.modelCount, 10);
-                    const isValid = row.modelName && allGameSystems.includes(row.gameSystem as GameSystem) && row.army && STATUSES.includes(row.status as Status) && !isNaN(modelCount) && modelCount > 0;
+                    const isValid = row.modelName && allGameSystems.includes(row.gameSystem) && row.army && STATUSES.includes(row.status as Status) && !isNaN(modelCount) && modelCount > 0;
     
                     if (isValid) {
                         const miniData: Omit<Miniature, 'id'> = {
                             modelName: row.modelName,
-                            gameSystem: row.gameSystem as GameSystem,
+                            gameSystem: row.gameSystem,
                             army: row.army,
                             status: row.status as Status,
                             modelCount: modelCount
@@ -226,63 +227,68 @@ const CollectionPage: React.FC<CollectionPageProps> = (props) => {
                 theme={theme}
             />
         
-            <div className="my-8 p-6 bg-gray-800/50 rounded-xl shadow-2xl backdrop-blur-sm">
-                <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-                    <h2 className={`text-3xl font-bold ${theme.primaryText} tracking-wider transition-colors duration-300`}>My Collection</h2>
-                    <div className="flex flex-wrap items-center gap-4">
-                        <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg shadow-md transition-all duration-300">
-                            <DownloadIcon /> Export to CSV
-                        </button>
-                        <label className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg shadow-md transition-all duration-300 cursor-pointer">
-                            <UploadIcon /> Import from CSV
-                            <input type="file" accept=".csv" className="hidden" onChange={handleImportChange} ref={importInputRef} />
-                        </label>
-                        <button onClick={onAddNewClick} className={`flex items-center gap-2 px-4 py-2 ${theme.button} rounded-lg shadow-md transition-all duration-300 transform hover:scale-105`}>
-                            <PlusCircleIcon /> Add New
-                        </button>
+            <div className="relative my-8 p-6 bg-gray-800/50 rounded-xl shadow-2xl backdrop-blur-sm overflow-hidden">
+                <GameLogoDisplay gameSystem={filters.gameSystem} />
+                
+                <div className="relative z-10">
+                    <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+                        <h2 className={`text-3xl font-bold ${theme.primaryText} tracking-wider transition-colors duration-300`}>My Collection</h2>
+                        <div className="flex flex-wrap items-center gap-4">
+                            <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg shadow-md transition-all duration-300">
+                                <DownloadIcon /> Export to CSV
+                            </button>
+                            <label className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg shadow-md transition-all duration-300 cursor-pointer">
+                                <UploadIcon /> Import from CSV
+                                <input type="file" accept=".csv" className="hidden" onChange={handleImportChange} ref={importInputRef} />
+                            </label>
+                            <button onClick={onAddNewClick} className={`flex items-center gap-2 px-4 py-2 ${theme.button} rounded-lg shadow-md transition-all duration-300 transform hover:scale-105`}>
+                                <PlusCircleIcon /> Add New
+                            </button>
+                        </div>
                     </div>
+
+                    {selectedIds.size > 0 && (
+                        <BulkActionBar
+                            selectedCount={selectedIds.size}
+                            onClear={clearSelection}
+                            onDelete={handleBulkDelete}
+                            onEdit={() => setIsBulkEditModalOpen(true)}
+                            theme={theme}
+                        />
+                    )}
+
+                    {isBulkEditModalOpen && (
+                        <BulkEditModal
+                            selectedCount={selectedIds.size}
+                            onClose={() => setIsBulkEditModalOpen(false)}
+                            onSave={handleBulkEdit}
+                            theme={theme}
+                            allGameSystems={allGameSystems}
+                        />
+                    )}
+
+                    {isFormVisible && (
+                        <MiniatureForm 
+                            onSubmit={onFormSubmit}
+                            initialData={editingMiniature}
+                            onCancel={onCancelForm}
+                            theme={theme}
+                            // FIX: Pass allGameSystems to the form so it can populate its dropdown.
+                            allGameSystems={allGameSystems}
+                        />
+                    )}
+
+                    <MiniatureList 
+                        miniatures={filteredMiniatures} 
+                        onEdit={onEdit} 
+                        onDelete={onDelete}
+                        onSort={onSort}
+                        sortConfig={sortConfig}
+                        selectedIds={selectedIds}
+                        onSelect={handleSelect}
+                        onSelectAll={() => handleSelectAll(filteredMiniatures.map(m => m.id))}
+                    />
                 </div>
-
-                {selectedIds.size > 0 && (
-                    <BulkActionBar
-                        selectedCount={selectedIds.size}
-                        onClear={clearSelection}
-                        onDelete={handleBulkDelete}
-                        onEdit={() => setIsBulkEditModalOpen(true)}
-                        theme={theme}
-                    />
-                )}
-
-                {isBulkEditModalOpen && (
-                    <BulkEditModal
-                        selectedCount={selectedIds.size}
-                        onClose={() => setIsBulkEditModalOpen(false)}
-                        onSave={handleBulkEdit}
-                        theme={theme}
-                        allGameSystems={allGameSystems}
-                    />
-                )}
-
-                {isFormVisible && (
-                    <MiniatureForm 
-                        onSubmit={onFormSubmit}
-                        initialData={editingMiniature}
-                        onCancel={onCancelForm}
-                        theme={theme}
-                        allGameSystems={allGameSystems}
-                    />
-                )}
-
-                <MiniatureList 
-                    miniatures={filteredMiniatures} 
-                    onEdit={onEdit} 
-                    onDelete={onDelete}
-                    onSort={onSort}
-                    sortConfig={sortConfig}
-                    selectedIds={selectedIds}
-                    onSelect={handleSelect}
-                    onSelectAll={() => handleSelectAll(filteredMiniatures.map(m => m.id))}
-                />
             </div>
         </>
     );

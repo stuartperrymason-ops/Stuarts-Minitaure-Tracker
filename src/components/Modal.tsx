@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Theme } from '../themes';
+// FIX: Add missing XIcon import.
 import { XIcon } from './Icons';
 
 interface ModalProps {

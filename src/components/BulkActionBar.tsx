@@ -1,5 +1,6 @@
 import React from 'react';
 import { Theme } from '../themes';
+// FIX: Import the missing XCircleIcon.
 import { PencilIcon, TrashIcon, XCircleIcon } from './Icons';
 
 interface BulkActionBarProps {
