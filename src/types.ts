@@ -20,26 +20,26 @@ export enum Status {
 }
 
 export interface Miniature {
-    // FIX: Switched from 'id' to '_id' to align with MongoDB's default property, resolving numerous type errors in the data store.
+    // FIX: Changed 'id' to '_id' to match MongoDB's default identifier.
     _id: string;
     modelName: string;
-    // FIX: Changed type to string to support dynamically added game systems.
+    // FIX: Changed from GameSystem enum to string to allow for user-added game systems.
     gameSystem: string;
     army: string;
     status: Status;
     modelCount: number;
-    // FIX: Added optional 'notes' and 'images' properties to support new features and fix related type errors.
+    // FIX: Added optional notes property to align with store logic.
     notes?: string;
+    // FIX: Added optional images property for the image gallery feature.
     images?: string[];
 }
 
 export interface Filter {
-    // FIX: Changed type to string to support dynamically added game systems.
+    // FIX: Changed from GameSystem enum to string to align with the Miniature type.
     gameSystem: string | 'all';
     army: string;
 }
 
-// FIX: Added SortConfig type definition to be used across the application, resolving an import error in the store.
 export type SortConfig = {
     key: keyof Miniature;
     direction: 'asc' | 'desc';
