@@ -12,7 +12,9 @@ interface TreemapNode {
     size: number;
     statusProgress: number;
     children?: TreemapNode[];
+    // FIX: Add optional gameSystem property to allow it on leaf nodes for the tooltip.
     gameSystem?: string;
+    // FIX: Add index signature to resolve recharts Treemap data prop type error.
     [key: string]: any;
 }
 
@@ -47,6 +49,8 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({ data }) => {
 
             const gameSystemNode = groupedByGameSystem[mini.gameSystem];
             
+            // FIX: Accumulate size and progress on the game system node.
+            // This ensures the top-level containers have a size for the treemap to render.
             gameSystemNode.size += mini.modelCount;
             gameSystemNode.statusProgress += STATUS_PROGRESS[mini.status] * mini.modelCount;
 
@@ -128,6 +132,7 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({ data }) => {
             <Treemap
                 data={treemapData}
                 dataKey="size"
+                // FIX: The `recharts` Treemap component expects the `aspectRatio` prop, not `ratio`, to control the aspect ratio of cells.
                 aspectRatio={4 / 3}
                 stroke="#fff"
                 fill="#8884d8"
