@@ -4,6 +4,7 @@ import { Miniature, Filter, Status } from '../types';
 import { SortConfig } from '../App';
 import FilterControls from '../components/FilterControls';
 import MiniatureForm from '../components/MiniatureForm';
+import MiniatureList from '../components/MiniatureList';
 import { PlusCircleIcon, UploadIcon, DownloadIcon } from '../components/Icons';
 import { Theme } from '../themes';
 import BulkActionBar from '../components/BulkActionBar';
