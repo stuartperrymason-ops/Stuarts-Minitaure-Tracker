@@ -249,10 +249,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     importData: async (miniaturesToImport) => {
         try {
             await axios.post('/api/miniatures/bulk-replace', { miniatures: miniaturesToImport });
+            
+            // After the database is overwritten, refetch all data to sync the client.
             await get().fetchInitialData();
+    
+            // Also, reset filters, search, and selections. This ensures that the user
+            // sees the newly imported collection without any old filters hiding the data.
+            set({
+                filters: { gameSystem: 'all', army: '' },
+                searchQuery: '',
+                selectedIds: [],
+            });
         } catch (error) {
             console.error("Failed to import data:", error);
             alert("Error: Could not import data.");
+            // Attempt to refetch data even on failure to sync with whatever state the DB is in.
+            await get().fetchInitialData();
         }
     },
 
