@@ -1,12 +1,9 @@
 import React from 'react';
-import { Miniature } from '../types';
+import { useAppStore } from '../store';
 import Dashboard from '../components/Dashboard';
 
-interface DashboardPageProps {
-    filteredMiniatures: Miniature[];
-}
-
-const DashboardPage: React.FC<DashboardPageProps> = ({ filteredMiniatures }) => {
+const DashboardPage: React.FC = () => {
+    const filteredMiniatures = useAppStore(state => state.filteredMiniatures);
     return (
         <Dashboard 
             miniatures={filteredMiniatures}
