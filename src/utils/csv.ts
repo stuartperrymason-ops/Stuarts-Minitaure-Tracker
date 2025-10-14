@@ -1,6 +1,6 @@
 import { Miniature } from "../types";
 
-const CSV_HEADERS: (keyof Omit<Miniature, '_id'>)[] = [
+const CSV_HEADERS: (keyof Omit<Miniature, '_id' | 'images'>)[] = [
     'modelName',
     'gameSystem',
     'army',
@@ -24,24 +24,51 @@ export function generateCSV(miniatures: Miniature[]): string {
     const headerRow = CSV_HEADERS.join(',');
     const rows = miniatures.map(mini => {
         return CSV_HEADERS.map(header => {
-            return escapeCsvField(mini[header]);
+            return escapeCsvField(mini[header as keyof Miniature]);
         }).join(',');
     });
 
     return [headerRow, ...rows].join('\n');
 }
 
+
+function parseCsvRow(row: string): string[] {
+    const result: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+    for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        if (char === '"') {
+            if (inQuotes && row[i+1] === '"') {
+                currentField += '"';
+                i++; // Skip the second quote in a pair
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            result.push(currentField);
+            currentField = '';
+        } else {
+            currentField += char;
+        }
+    }
+    result.push(currentField);
+    return result;
+}
+
+
 export function parseCSV(csvText: string): Omit<Miniature, '_id'>[] {
     const lines = csvText.trim().split(/\r?\n/);
-    if (lines.length < 2) {
-        throw new Error("CSV file must have a header row and at least one data row.");
+    if (lines.length < 1 || (lines.length === 1 && !lines[0].trim())) {
+        return [];
     }
 
-    const header = lines[0].split(',').map(h => h.trim());
-    const expectedHeader = CSV_HEADERS;
+    const header = parseCsvRow(lines[0]).map(h => h.trim());
     
-    if (JSON.stringify(header) !== JSON.stringify(expectedHeader)) {
-        throw new Error(`Invalid CSV header. Expected: "${expectedHeader.join(',')}" but got: "${header.join(',')}"`);
+    const isValidHeader = header.length === CSV_HEADERS.length && header.every((h, i) => h === CSV_HEADERS[i]);
+
+    if (!isValidHeader) {
+        throw new Error(`Invalid CSV header. Expected: "${CSV_HEADERS.join(',')}" but got: "${header.join(',')}"`);
     }
 
     const dataRows = lines.slice(1);
@@ -50,9 +77,12 @@ export function parseCSV(csvText: string): Omit<Miniature, '_id'>[] {
     for (const row of dataRows) {
         if (!row.trim()) continue;
 
-        // Basic CSV parsing - does not handle commas inside quoted fields well.
-        // For a more robust solution, a dedicated library would be better.
-        const values = row.split(',');
+        const values = parseCsvRow(row);
+
+        if (values.length !== CSV_HEADERS.length) {
+            console.warn(`Skipping malformed CSV row (column count mismatch): ${row}`);
+            continue;
+        }
 
         const miniature: any = {};
         for (let i = 0; i < header.length; i++) {
