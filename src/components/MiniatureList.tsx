@@ -56,7 +56,8 @@ const MiniatureList: React.FC<MiniatureListProps> = ({ miniatures, onEdit, onDel
                 </thead>
                 <tbody>
                     {miniatures.map(mini => (
-                        <tr key={mini.id} className="bg-gray-800/50 border-b border-gray-700 hover:bg-gray-700/50 transition-colors">
+                        // FIX: Use `_id` instead of `id` for the key, aligning with the database schema.
+                        <tr key={mini._id} className="bg-gray-800/50 border-b border-gray-700 hover:bg-gray-700/50 transition-colors">
                             <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap">{mini.modelName}</th>
                             <td className="px-6 py-4">{mini.gameSystem}</td>
                             <td className="px-6 py-4">{mini.army}</td>
@@ -71,7 +72,8 @@ const MiniatureList: React.FC<MiniatureListProps> = ({ miniatures, onEdit, onDel
                                 <button onClick={() => onEdit(mini)} className="font-medium text-blue-400 hover:underline">
                                     <PencilIcon />
                                 </button>
-                                <button onClick={() => onDelete(mini.id)} className="font-medium text-red-400 hover:underline">
+                                {/* // FIX: Pass `_id` to the onDelete handler. */}
+                                <button onClick={() => onDelete(mini._id)} className="font-medium text-red-400 hover:underline">
                                     <TrashIcon />
                                 </button>
                             </td>

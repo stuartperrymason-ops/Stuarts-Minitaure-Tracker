@@ -4,7 +4,8 @@ import { GAME_SYSTEMS, STATUSES } from '../constants';
 import { Theme } from '../themes';
 
 interface MiniatureFormProps {
-    onSubmit: (miniature: Omit<Miniature, 'id'> | Miniature) => void;
+    // FIX: Use `_id` in the Omit type to align with the updated Miniature interface.
+    onSubmit: (miniature: Omit<Miniature, '_id'> | Miniature) => void;
     initialData?: Miniature | null;
     onCancel: () => void;
     theme: Theme;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Miniature, Filter } from '../types';
-import { SortConfig } from '../App';
+// FIX: Import SortConfig from the centralized types.ts file.
+import { SortConfig } from '../types';
 import FilterControls from '../components/FilterControls';
 import MiniatureForm from '../components/MiniatureForm';
 import MiniatureList from '../components/MiniatureList';
@@ -18,7 +19,7 @@ interface CollectionPageProps {
     canUndo: boolean;
     canRedo: boolean;
     onAddNewClick: () => void;
-    onFormSubmit: (miniature: Omit<Miniature, 'id'> | Miniature) => void;
+    onFormSubmit: (miniature: Omit<Miniature, '_id'> | Miniature) => void;
     onCancelForm: () => void;
     onEdit: (miniature: Miniature) => void;
     onDelete: (id: string) => void;
