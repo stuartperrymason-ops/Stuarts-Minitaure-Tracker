@@ -300,7 +300,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         const { selectedIds } = get();
         try {
             const response = await axios.post('/api/miniatures/bulk-update', { ids: selectedIds, updates });
-            // FIX: Use a type guard to ensure the compiler understands that the filtered array contains valid Miniature objects. This resolves a downstream type error.
             const validUpdatedMinis = Array.isArray(response.data)
                 ? response.data.filter((m: any): m is Miniature => m && m._id && m.modelName)
                 : [];
