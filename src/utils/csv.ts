@@ -58,12 +58,35 @@ function parseCsvRow(row: string): string[] {
 
 
 export function parseCSV(csvText: string): Omit<Miniature, '_id'>[] {
-    const lines = csvText.trim().split(/\r?\n/);
-    if (lines.length < 1 || (lines.length === 1 && !lines[0].trim())) {
+    const rawLines = csvText.trim().split(/\r?\n/);
+    if (rawLines.length === 0 || (rawLines.length === 1 && !rawLines[0].trim())) {
         return [];
     }
 
-    const header = parseCsvRow(lines[0]).map(h => h.trim());
+    const logicalRows: string[] = [];
+    let rowBuffer = '';
+
+    for (const line of rawLines) {
+        rowBuffer += (rowBuffer ? '\n' : '') + line;
+        const quoteCount = (rowBuffer.match(/"/g) || []).length;
+        
+        // If the number of quotes is even, we assume the row is complete.
+        // This handles multiline fields correctly.
+        if (quoteCount % 2 === 0) {
+            logicalRows.push(rowBuffer);
+            rowBuffer = '';
+        }
+    }
+    
+    if (rowBuffer) {
+        logicalRows.push(rowBuffer); // Add any remaining buffer as the last line
+    }
+
+    if (logicalRows.length < 1) {
+        return [];
+    }
+    
+    const header = parseCsvRow(logicalRows[0]).map(h => h.trim());
     
     const isValidHeader = header.length === CSV_HEADERS.length && header.every((h, i) => h === CSV_HEADERS[i]);
 
@@ -71,7 +94,7 @@ export function parseCSV(csvText: string): Omit<Miniature, '_id'>[] {
         throw new Error(`Invalid CSV header. Expected: "${CSV_HEADERS.join(',')}" but got: "${header.join(',')}"`);
     }
 
-    const dataRows = lines.slice(1);
+    const dataRows = logicalRows.slice(1);
     const miniatures: Omit<Miniature, '_id'>[] = [];
 
     for (const row of dataRows) {
