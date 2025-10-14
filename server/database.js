@@ -8,6 +8,11 @@ if (!rawUri) {
   throw new Error('Please define the MONGODB_URI environment variable inside server/.env');
 }
 
+const dbName = process.env.DB_NAME;
+if (!dbName) {
+    throw new Error('Please define the DB_NAME environment variable inside server/.env');
+}
+
 const uri = rawUri.trim().replace(/^"|"$/g, '');
 
 const client = new MongoClient(uri);
@@ -19,10 +24,12 @@ export async function connectToDatabase() {
   }
   try {
     await client.connect();
-    db = client.db(); 
-    console.log('Successfully connected to MongoDB.');
+    db = client.db(dbName);
+    console.log(`Successfully connected to MongoDB database: ${dbName}.`);
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
+    // Make sure db is null on failure so the middleware catches it.
+    db = null; 
   }
 }
 
