@@ -6,7 +6,7 @@ export interface Theme {
   secondaryText: string;
   accentRing: string;
   button: string;
-  // FIX: Add legendText property for CombinedStatusTracker component styling.
+  // FIX: Add legendText property to the Theme interface.
   legendText: string;
 }
 
@@ -16,11 +16,10 @@ export const DEFAULT_THEME: Theme = {
   secondaryText: 'text-purple-400',
   accentRing: 'focus:ring-cyan-500',
   button: 'bg-cyan-600 hover:bg-cyan-500',
-  // FIX: Provide a default value for the new legendText property.
   legendText: 'text-gray-300',
 };
 
-export const THEMES: Record<GameSystem, Theme> = {
+export const THEMES: Record<string, Theme> = {
   [GameSystem.MarvelCrisisProtocol]: {
     bgGradient: 'bg-gradient-to-br from-red-900 via-blue-900 to-gray-900',
     primaryText: 'text-red-400',

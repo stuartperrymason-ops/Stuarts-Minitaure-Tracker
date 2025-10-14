@@ -22,6 +22,7 @@ interface ImageGalleryModalProps {
 const ImageGalleryModal: React.FC<ImageGalleryModalProps> = ({ miniature, onClose }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
 
+    // FIX: Access the 'images' property safely, providing an empty array as a fallback.
     const images = miniature.images || [];
 
     // Keyboard navigation effect

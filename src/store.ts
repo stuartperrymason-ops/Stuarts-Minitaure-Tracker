@@ -1,13 +1,5 @@
-/**
- * @file src/store.ts
- * This file defines the central state management for the application using Zustand.
- * It consolidates all application state and actions into a single store,
- * making state management predictable and easier to debug.
- */
-
 import { create } from 'zustand';
 import { produce } from 'immer';
-// FIX: Import SortConfig from the centralized types file.
 import { Miniature, Filter, SortConfig, Status } from './types';
 import { Theme, THEMES, ARMY_THEMES, DEFAULT_THEME } from './themes';
 import axios from 'axios';
@@ -19,6 +11,7 @@ interface AppState {
     gameSystems: string[];
 
     // UI State
+    page: 'dashboard' | 'collection' | 'data';
     filters: Filter;
     searchQuery: string;
     sortConfig: SortConfig;
@@ -37,6 +30,7 @@ interface AppState {
     isAllSelected: boolean;
 
     // Actions (functions to modify state)
+    setPage: (page: 'dashboard' | 'collection' | 'data') => void;
     fetchInitialData: () => Promise<void>;
     addGameSystem: (name: string) => Promise<boolean>;
     setFilters: (newFilters: Partial<Filter>) => void;
@@ -45,6 +39,7 @@ interface AppState {
     addMiniature: (miniature: Omit<Miniature, '_id'>) => Promise<void>;
     updateMiniature: (miniature: Miniature) => Promise<void>;
     deleteMiniature: (id: string) => Promise<void>;
+    importData: (miniatures: Omit<Miniature, '_id'>[]) => Promise<void>;
     startEditing: (miniature: Miniature) => void;
     startAdding: () => void;
     stopEditing: () => void;
@@ -64,6 +59,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     // --- STATE ---
     miniatures: [],
     gameSystems: [],
+    page: 'dashboard',
     filters: { gameSystem: 'all', army: '' },
     searchQuery: '',
     sortConfig: { key: 'modelName', direction: 'asc' },
@@ -128,28 +124,34 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
 
         // Apply sorting
-        if (sortConfig) {
-            result.sort((a, b) => {
-                const aValue = a[sortConfig.key];
-                const bValue = b[sortConfig.key];
-                let comparison = 0;
-                if (typeof aValue === 'number' && typeof bValue === 'number') {
-                    comparison = aValue - bValue;
-                } else if (typeof aValue === 'string' && typeof bValue === 'string') {
-                    comparison = aValue.localeCompare(bValue);
-                }
-                return sortConfig.direction === 'asc' ? comparison : -comparison;
-            });
-        }
+        result.sort((a, b) => {
+            const aValue = a[sortConfig.key];
+            const bValue = b[sortConfig.key];
+            let comparison = 0;
+            if (typeof aValue === 'number' && typeof bValue === 'number') {
+                comparison = aValue - bValue;
+            } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+                comparison = aValue.localeCompare(bValue);
+            } else if (aValue === undefined || aValue === null) {
+                return 1;
+            } else if (bValue === undefined || bValue === null) {
+                return -1;
+            }
+            return sortConfig.direction === 'asc' ? comparison : -comparison;
+        });
+        
         return result;
     },
 
     get isAllSelected() {
         const { filteredMiniatures, selectedIds } = get();
-        return filteredMiniatures.length > 0 && selectedIds.length === filteredMiniatures.length;
+        const filteredIds = new Set(filteredMiniatures.map(m => m._id));
+        return filteredMiniatures.length > 0 && selectedIds.length > 0 && selectedIds.every(id => filteredIds.has(id));
     },
 
     // --- ACTIONS ---
+    setPage: (page) => set({ page }),
+
     fetchInitialData: async () => {
         set({ isLoading: true, error: null });
         try {
@@ -159,16 +161,13 @@ export const useAppStore = create<AppState>((set, get) => ({
             ]);
             set({
                 miniatures: miniaturesRes.data,
-                gameSystems: gameSystemsRes.data.map((gs: any) => gs.name),
+                gameSystems: gameSystemsRes.data.map((gs: any) => gs.name).sort(),
                 isLoading: false,
             });
         } catch (error) {
-            console.error("Failed to fetch initial data:", error);
             let errorMessage = 'An unexpected error occurred while fetching data.';
             if (axios.isAxiosError(error)) {
                  errorMessage = error.response?.data?.message || 'Failed to connect to the server. Please ensure it is running and properly configured.';
-            } else if (error instanceof Error) {
-                errorMessage = error.message;
             }
             set({ isLoading: false, error: errorMessage });
         }
@@ -195,7 +194,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     setFilters: (newFilters) => set(produce((draft: AppState) => {
         draft.filters = { ...draft.filters, ...newFilters };
-        // When filters change, clear selection to avoid confusion
         draft.selectedIds = [];
     })),
     
@@ -217,6 +215,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             }));
         } catch (error) {
             console.error("Failed to add miniature:", error);
+            alert("Error: Could not add miniature.");
         }
     },
 
@@ -225,14 +224,13 @@ export const useAppStore = create<AppState>((set, get) => ({
             const response = await axios.put(`/api/miniatures/${miniature._id}`, miniature);
             set(produce((draft: AppState) => {
                 const index = draft.miniatures.findIndex(m => m._id === miniature._id);
-                if (index !== -1) {
-                    draft.miniatures[index] = response.data;
-                }
+                if (index !== -1) draft.miniatures[index] = response.data;
                 draft.isFormVisible = false;
                 draft.editingMiniature = null;
             }));
         } catch (error) {
             console.error("Failed to update miniature:", error);
+            alert("Error: Could not update miniature.");
         }
     },
 
@@ -244,6 +242,17 @@ export const useAppStore = create<AppState>((set, get) => ({
             }));
         } catch (error) {
             console.error("Failed to delete miniature:", error);
+            alert("Error: Could not delete miniature.");
+        }
+    },
+
+    importData: async (miniaturesToImport) => {
+        try {
+            await axios.post('/api/miniatures/bulk-replace', { miniatures: miniaturesToImport });
+            await get().fetchInitialData();
+        } catch (error) {
+            console.error("Failed to import data:", error);
+            alert("Error: Could not import data.");
         }
     },
 
@@ -261,7 +270,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
 
     toggleSelectAll: () => {
-        const { selectedIds, filteredMiniatures, isAllSelected } = get();
+        const { isAllSelected, filteredMiniatures } = get();
         if (isAllSelected) {
             set({ selectedIds: [] });
         } else {
@@ -270,7 +279,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     },
 
     clearSelection: () => set({ selectedIds: [] }),
-
     startBulkEditing: () => set({ isBulkEditing: true }),
     stopBulkEditing: () => set({ isBulkEditing: false }),
 
@@ -284,6 +292,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             }));
         } catch (error) {
             console.error("Failed to delete selected miniatures:", error);
+            alert("Error: Could not delete selected miniatures.");
         }
     },
     
@@ -291,9 +300,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         const { selectedIds } = get();
         try {
             const response = await axios.post('/api/miniatures/bulk-update', { ids: selectedIds, updates });
-            const updatedMinis: Miniature[] = response.data;
-            const updatedMinisMap = new Map(updatedMinis.map(m => [m._id, m]));
-
+            // FIX: Use a type guard to ensure the compiler understands that the filtered array contains valid Miniature objects. This resolves a downstream type error.
+            const validUpdatedMinis = Array.isArray(response.data)
+                ? response.data.filter((m: any): m is Miniature => m && m._id && m.modelName)
+                : [];
+            const updatedMinisMap = new Map(validUpdatedMinis.map((m: Miniature) => [m._id, m]));
             set(produce((draft: AppState) => {
                 draft.miniatures.forEach((mini, index) => {
                     if (updatedMinisMap.has(mini._id)) {
@@ -305,6 +316,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             }));
         } catch (error) {
             console.error("Failed to update selected miniatures:", error);
+            alert("Error: Could not update selected miniatures.");
         }
     },
     

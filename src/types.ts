@@ -20,25 +20,22 @@ export enum Status {
 }
 
 export interface Miniature {
-    // FIX: Changed `id` to `_id` to match the database schema from MongoDB.
     _id: string;
     modelName: string;
-    gameSystem: GameSystem;
+    gameSystem: string; // Now a string to support user-added systems
     army: string;
     status: Status;
     modelCount: number;
-    // FIX: Added optional `notes` property to allow for storing additional details.
     notes?: string;
-    // FIX: Added optional `images` property to support the image gallery feature.
+    // FIX: Add optional 'images' property to support the image gallery feature.
     images?: string[];
 }
 
 export interface Filter {
-    gameSystem: GameSystem | 'all';
+    gameSystem: string | 'all';
     army: string;
 }
 
-// FIX: Moved SortConfig from App.tsx to make it reusable across different components and the store.
 export type SortConfig = {
     key: keyof Miniature;
     direction: 'asc' | 'desc';

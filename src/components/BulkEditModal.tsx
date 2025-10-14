@@ -1,41 +1,24 @@
-/**
- * @file src/components/BulkEditModal.tsx
- * This component provides a modal form for editing multiple miniatures at once.
- * Users can choose to update the status, army, game system, and notes for all selected items.
- */
-
 import React, { useState } from 'react';
 import { Status } from '../types';
 import { useAppStore } from '../store';
 import { STATUSES } from '../constants';
 import Modal from './Modal';
 
-// Defines the props for the BulkEditModal component.
 interface BulkEditModalProps {
-    onClose: () => void; // Callback to close the modal.
-    onSave: (updates: { status?: Status; army?: string, gameSystem?: string, notes?: string }) => void; // Callback to save the changes.
-    selectedCount: number; // The number of items being edited.
+    onClose: () => void;
+    onSave: (updates: { status?: Status; army?: string, gameSystem?: string, notes?: string }) => void;
+    selectedCount: number;
 }
 
-/**
- * A modal dialog for applying bulk edits to selected miniatures.
- * @param {BulkEditModalProps} props The component's properties.
- * @returns {JSX.Element} The rendered modal component.
- */
 const BulkEditModal: React.FC<BulkEditModalProps> = ({ onClose, onSave, selectedCount }) => {
-    // Select required state from the Zustand store.
     const { gameSystems: allGameSystems, activeTheme } = useAppStore();
 
-    // State for each field in the bulk edit form.
     const [status, setStatus] = useState<Status | ''>('');
     const [army, setArmy] = useState('');
     const [gameSystem, setGameSystem] = useState<string | ''>('');
     const [notes, setNotes] = useState('');
     const [updateNotes, setUpdateNotes] = useState(false);
 
-    /**
-     * Gathers the changes from the form state and calls the onSave callback.
-     */
     const handleSave = () => {
         const updates: { status?: Status; army?: string; gameSystem?: string, notes?: string } = {};
         if (status) updates.status = status;
@@ -45,9 +28,8 @@ const BulkEditModal: React.FC<BulkEditModalProps> = ({ onClose, onSave, selected
 
         if (Object.keys(updates).length > 0) {
             onSave(updates);
-        } else {
-            onClose();
         }
+        onClose();
     };
 
     return (

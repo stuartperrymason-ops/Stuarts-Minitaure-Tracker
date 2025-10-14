@@ -86,6 +86,7 @@ const CombinedStatusTracker: React.FC<CombinedStatusTrackerProps> = ({ miniature
             </div>
 
             {/* The legend for the progress bar. */}
+            {/* FIX: The 'legendText' property does not exist on the Theme type. Use a specific text color class instead. */}
             <div className={`flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm ${theme.legendText}`}>
                 {segments.map((segment) => (
                     <div key={segment.name} className="flex items-center gap-2">
