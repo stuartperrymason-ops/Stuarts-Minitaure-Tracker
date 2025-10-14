@@ -6,7 +6,7 @@ export interface Theme {
   secondaryText: string;
   accentRing: string;
   button: string;
-  // FIX: Added legendText property for styling chart legends.
+  // FIX: Add legendText property for CombinedStatusTracker component styling.
   legendText: string;
 }
 
@@ -16,19 +16,17 @@ export const DEFAULT_THEME: Theme = {
   secondaryText: 'text-purple-400',
   accentRing: 'focus:ring-cyan-500',
   button: 'bg-cyan-600 hover:bg-cyan-500',
-  // FIX: Added default value for legendText.
+  // FIX: Provide a default value for the new legendText property.
   legendText: 'text-gray-300',
 };
 
-// FIX: Changed record key from GameSystem to string to allow for dynamically added game systems.
-export const THEMES: Record<string, Theme> = {
+export const THEMES: Record<GameSystem, Theme> = {
   [GameSystem.MarvelCrisisProtocol]: {
     bgGradient: 'bg-gradient-to-br from-red-900 via-blue-900 to-gray-900',
     primaryText: 'text-red-400',
     secondaryText: 'text-blue-400',
     accentRing: 'focus:ring-red-500',
     button: 'bg-red-700 hover:bg-red-600',
-    // FIX: Added missing legendText property.
     legendText: 'text-gray-300',
   },
   [GameSystem.Battletech]: {
@@ -37,7 +35,6 @@ export const THEMES: Record<string, Theme> = {
     secondaryText: 'text-amber-400',
     accentRing: 'focus:ring-green-500',
     button: 'bg-green-700 hover:bg-green-600',
-    // FIX: Added missing legendText property.
     legendText: 'text-gray-300',
   },
   [GameSystem.StarWarsLegion]: {
@@ -46,7 +43,6 @@ export const THEMES: Record<string, Theme> = {
     secondaryText: 'text-red-400',
     accentRing: 'focus:ring-sky-500',
     button: 'bg-sky-700 hover:bg-sky-600',
-    // FIX: Added missing legendText property.
     legendText: 'text-gray-300',
   },
   [GameSystem.StarWarsShatterpoint]: {
@@ -55,7 +51,6 @@ export const THEMES: Record<string, Theme> = {
     secondaryText: 'text-yellow-400',
     accentRing: 'focus:ring-purple-500',
     button: 'bg-purple-700 hover:bg-purple-600',
-    // FIX: Added missing legendText property.
     legendText: 'text-gray-300',
   },
   [GameSystem.MiddleEarthSBG]: {
@@ -64,7 +59,6 @@ export const THEMES: Record<string, Theme> = {
     secondaryText: 'text-stone-400',
     accentRing: 'focus:ring-emerald-500',
     button: 'bg-emerald-700 hover:bg-emerald-600',
-    // FIX: Added missing legendText property.
     legendText: 'text-gray-300',
   },
   [GameSystem.WarhammerOldWorld]: {
@@ -73,7 +67,6 @@ export const THEMES: Record<string, Theme> = {
     secondaryText: 'text-stone-300',
     accentRing: 'focus:ring-amber-500',
     button: 'bg-amber-700 hover:bg-amber-600',
-    // FIX: Added missing legendText property.
     legendText: 'text-gray-300',
   },
   [GameSystem.AgeOfSigmar]: {
@@ -82,7 +75,6 @@ export const THEMES: Record<string, Theme> = {
     secondaryText: 'text-sky-400',
     accentRing: 'focus:ring-fuchsia-500',
     button: 'bg-fuchsia-700 hover:bg-fuchsia-600',
-    // FIX: Added missing legendText property.
     legendText: 'text-gray-300',
   },
   [GameSystem.Warhammer40k]: {
@@ -91,7 +83,6 @@ export const THEMES: Record<string, Theme> = {
     secondaryText: 'text-gray-400',
     accentRing: 'focus:ring-red-500',
     button: 'bg-red-800 hover:bg-red-700',
-    // FIX: Added missing legendText property.
     legendText: 'text-gray-300',
   },
 };

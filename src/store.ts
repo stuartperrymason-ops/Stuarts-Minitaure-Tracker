@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import { produce } from 'immer';
+// FIX: Import SortConfig from the centralized types file.
 import { Miniature, Filter, SortConfig, Status } from './types';
 import { Theme, THEMES, ARMY_THEMES, DEFAULT_THEME } from './themes';
 import axios from 'axios';

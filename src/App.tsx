@@ -1,6 +1,7 @@
 import React from 'react';
 import { useState, useMemo, useCallback } from 'react';
-import { Miniature, GameSystem, Status, Filter } from './types';
+// FIX: Import SortConfig from types.ts
+import { Miniature, GameSystem, Status, Filter, SortConfig } from './types';
 import { useHistory, HistoryState } from './hooks/useHistory';
 import Header from './components/Header';
 import DashboardPage from './pages/DashboardPage';
@@ -12,10 +13,7 @@ import { THEMES, DEFAULT_THEME, Theme, ARMY_THEMES } from './themes';
 
 export type Page = 'dashboard' | 'collection' | 'data';
 
-export type SortConfig = {
-    key: keyof Miniature;
-    direction: 'asc' | 'desc';
-};
+// FIX: Moved SortConfig to types.ts to be shared across the application.
 
 const App: React.FC = () => {
     const {
@@ -73,21 +71,24 @@ const App: React.FC = () => {
         });
     }, []);
 
-    const addMiniature = (miniature: Omit<Miniature, 'id'>) => {
-        const newMiniature: Miniature = { ...miniature, id: Date.now().toString() };
+    const addMiniature = (miniature: Omit<Miniature, '_id'>) => {
+        // FIX: Use `_id` instead of `id`. For local state, a timestamp is sufficient.
+        const newMiniature: Miniature = { ...miniature, _id: Date.now().toString() };
         setMiniatures(prev => [...prev, newMiniature]);
         setIsFormVisible(false);
     };
 
     const updateMiniature = (updatedMiniature: Miniature) => {
-        setMiniatures(prev => prev.map(m => m.id === updatedMiniature.id ? updatedMiniature : m));
+        // FIX: Use `_id` for comparison.
+        setMiniatures(prev => prev.map(m => m._id === updatedMiniature._id ? updatedMiniature : m));
         setEditingMiniature(null);
         setIsFormVisible(false);
     };
 
     const deleteMiniature = useCallback((id: string) => {
         if (window.confirm('Are you sure you want to delete this miniature entry?')) {
-            setMiniatures(prev => prev.filter(m => m.id !== id));
+            // FIX: Use `_id` for filtering.
+            setMiniatures(prev => prev.filter(m => m._id !== id));
         }
     }, [setMiniatures]);
 
@@ -136,8 +137,9 @@ const App: React.FC = () => {
         return result;
     }, [miniatures, filters, searchQuery, sortConfig]);
 
-    const handleFormSubmit = (miniature: Omit<Miniature, 'id'> | Miniature) => {
-        if ('id' in miniature) {
+    const handleFormSubmit = (miniature: Omit<Miniature, '_id'> | Miniature) => {
+        // FIX: Check for `_id` property to determine if it's an existing miniature.
+        if ('_id' in miniature) {
             updateMiniature(miniature);
         } else {
             addMiniature(miniature);
