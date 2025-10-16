@@ -144,9 +144,32 @@ export const useAppStore = create<AppState>((set, get) => ({
     },
 
     get isAllSelected() {
-        const { filteredMiniatures, selectedIds } = get();
-        const filteredIds = new Set(filteredMiniatures.map(m => m._id));
-        return filteredMiniatures.length > 0 && selectedIds.length > 0 && selectedIds.every(id => filteredIds.has(id));
+        const { miniatures, filters, searchQuery, selectedIds } = get();
+        
+        // FIX: Re-calculate filtered list to avoid recursive call to `get().filteredMiniatures`
+        let filteredMiniatures = [...miniatures];
+        filteredMiniatures = filteredMiniatures.filter(m => {
+            const gameSystemMatch = filters.gameSystem === 'all' || m.gameSystem === filters.gameSystem;
+            const armyMatch = filters.army === '' || m.army.toLowerCase().includes(filters.army.toLowerCase());
+            return gameSystemMatch && armyMatch;
+        });
+
+        if (searchQuery.trim() !== '') {
+            const lowercasedQuery = searchQuery.toLowerCase();
+            filteredMiniatures = filteredMiniatures.filter(m =>
+                m.modelName.toLowerCase().includes(lowercasedQuery) ||
+                m.gameSystem.toLowerCase().includes(lowercasedQuery) ||
+                m.army.toLowerCase().includes(lowercasedQuery) ||
+                m.notes?.toLowerCase().includes(lowercasedQuery)
+            );
+        }
+
+        if (filteredMiniatures.length === 0) {
+            return false;
+        }
+
+        // Check if all items in the filtered list are selected
+        return filteredMiniatures.every(m => selectedIds.includes(m._id));
     },
 
     // --- ACTIONS ---
@@ -282,7 +305,29 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
 
     toggleSelectAll: () => {
-        const { isAllSelected, filteredMiniatures } = get();
+        // FIX: Accessing getters via get() is an anti-pattern.
+        // Re-calculate the necessary data directly from the state.
+        const { miniatures, filters, searchQuery, selectedIds } = get();
+
+        let filteredMiniatures = [...miniatures];
+        filteredMiniatures = filteredMiniatures.filter(m => {
+            const gameSystemMatch = filters.gameSystem === 'all' || m.gameSystem === filters.gameSystem;
+            const armyMatch = filters.army === '' || m.army.toLowerCase().includes(filters.army.toLowerCase());
+            return gameSystemMatch && armyMatch;
+        });
+
+        if (searchQuery.trim() !== '') {
+            const lowercasedQuery = searchQuery.toLowerCase();
+            filteredMiniatures = filteredMiniatures.filter(m =>
+                m.modelName.toLowerCase().includes(lowercasedQuery) ||
+                m.gameSystem.toLowerCase().includes(lowercasedQuery) ||
+                m.army.toLowerCase().includes(lowercasedQuery) ||
+                m.notes?.toLowerCase().includes(lowercasedQuery)
+            );
+        }
+        
+        const isAllSelected = filteredMiniatures.length > 0 && filteredMiniatures.every(m => selectedIds.includes(m._id));
+
         if (isAllSelected) {
             set({ selectedIds: [] });
         } else {

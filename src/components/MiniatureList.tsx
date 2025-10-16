@@ -96,7 +96,16 @@ const MiniatureList: React.FC = () => {
                                         <label htmlFor={`checkbox-table-search-${mini._id}`} className="sr-only">checkbox</label>
                                     </div>
                                 </td>
-                                <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap">{mini.modelName}</th>
+                                <th scope="row" className="px-6 py-4 font-medium text-white">
+                                    <div className="max-w-xs">
+                                        <div className="truncate" title={mini.modelName}>{mini.modelName}</div>
+                                        {mini.notes && (
+                                            <p className="font-normal text-gray-400 text-xs truncate" title={mini.notes}>
+                                                {mini.notes}
+                                            </p>
+                                        )}
+                                    </div>
+                                </th>
                                 <td className="px-6 py-4">{mini.gameSystem}</td>
                                 <td className="px-6 py-4">{mini.army}</td>
                                 <td className="px-6 py-4">{mini.modelCount}</td>
